@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:assignment_1/models/person.dart';
+
 import '../models/vehicle.dart';
 import '../repositories/person_repository.dart';
 import '../repositories/vehicle_repository.dart';
@@ -38,13 +40,16 @@ void handleVehicles(VehicleRepository repo, PersonRepository personRepo) {
 void _createVehicle(VehicleRepository repo) {
   stdout.write('Enter RegNr: ');
   var regNr = stdin.readLineSync();
- /*  stdout.write('Enter owner ID: ');
-  var owner = stdin.readLineSync(); */
+  stdout.write('Enter owner name: ');
+  var ownerName = stdin.readLineSync();
+  stdout.write('Enter owner ID: ');
+  var ownerId = stdin.readLineSync();
 
-  if (regNr != null) {
-    var vehicle = Vehicle(regNr);
+  if (regNr != null && ownerName != null && ownerId != null) {
+    var vehicle = Vehicle(regNr, Person(ownerName, ownerId));
     repo.addVehicle(vehicle);
     print('Vehicle created: ${vehicle.registrationNumber}');
+    print('Owner name: ${vehicle.owner.name} Owner ID: ${vehicle.owner.id}');
   } else {
     print('Invalid input, try again.');
   }
@@ -58,6 +63,7 @@ void _showAllVehicle(VehicleRepository repo) {
     print('List of vehicles:');
     for (var vehicle in vehicles) {
       print('RegNr: ${vehicle.registrationNumber}');
+      print('Owner name: ${vehicle.owner.name} Owner ID: ${vehicle.owner.id}');
     }
   }
 }
@@ -70,10 +76,23 @@ void _updateVehicle(VehicleRepository repo) {
   if (vehicle != null) {
     stdout.write('New RegNr (current RegNr: ${vehicle.registrationNumber}):');
     var newRegNr = stdin.readLineSync();
-    if (newRegNr != null && newRegNr.isNotEmpty) {
+    stdout.write('New Name (current name: ${vehicle.owner.name}):');
+    var newName = stdin.readLineSync();
+    stdout.write('New ID (current ID: ${vehicle.owner.id}):');
+    var newId = stdin.readLineSync();
+
+    bool isRegNrValid = newRegNr != null && newRegNr.isNotEmpty;
+    bool isNameValid = newName != null && newName.isNotEmpty;
+    bool isIdValid = newId != null && newId.isNotEmpty;
+
+    if (isRegNrValid && isNameValid && isIdValid) {
       vehicle.registrationNumber = newRegNr;
+      vehicle.owner.name = newName;
+      vehicle.owner.id = newId;
       repo.update(vehicle);
-      print('Person updated: ${vehicle.registrationNumber}');
+      print('Vehicle updated: ${vehicle.registrationNumber}');
+      print('Owner name updated: ${vehicle.owner.name}');
+      print('Owner ID updated: ${vehicle.owner.id}');
     } else {
       print('RegNr not valid.');
     }
