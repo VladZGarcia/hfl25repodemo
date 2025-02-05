@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import '../cli/person_commands.dart';
 import 'package:assignment_1/repositories/person_repository.dart';
 import 'package:assignment_1/repositories/vehicle_repository.dart';
 
@@ -31,9 +31,7 @@ void runCLI() {
   }
 }
 
-void handlePersons(PersonRepository repo) {
-  //Todo
-}
+
 
 void handleVehicles(VehicleRepository repo, PersonRepository personRepo) {
   //Todo
