@@ -3,7 +3,7 @@ import '../models/vehicle.dart';
 class VehicleRepository {
   List<Vehicle> vehicles = [];
 
-  void add(Vehicle vehicle) => vehicles.add(vehicle);
+  void addVehicle(Vehicle vehicle) => vehicles.add(vehicle);
   List<Vehicle> getAll() => vehicles;
   Vehicle? getById(String regNr) => vehicles.firstWhere((v) => v.registrationNumber == regNr, orElse: () => throw Exception('Vehicle not found'));
   void update(Vehicle vehicle) {
