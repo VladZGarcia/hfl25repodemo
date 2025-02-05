@@ -4,7 +4,7 @@ import '../models/person.dart';
 
 void handlePersons(PersonRepository repo) {
   while (true) {
-    print('\n Person handling. How can I help you?');
+    print('\nPerson handling. How can I help you?');
     print('1. Create person.');
     print('2. Show persons.');
     print('3. Update person.');

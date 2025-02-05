@@ -1,5 +1,6 @@
 import 'dart:io';
 import '../cli/person_commands.dart';
+import '../cli/vehicle_commands.dart';
 import 'package:assignment_1/repositories/person_repository.dart';
 import 'package:assignment_1/repositories/vehicle_repository.dart';
 
@@ -29,10 +30,4 @@ void runCLI() {
         print('Not valid, try again.');
     }
   }
-}
-
-
-
-void handleVehicles(VehicleRepository repo, PersonRepository personRepo) {
-  //Todo
 }
