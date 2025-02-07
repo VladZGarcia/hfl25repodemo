@@ -1,6 +1,6 @@
 import 'dart:io';
-import '../repositories/person_repository.dart';
 import '../models/person.dart';
+import '../repositories/person_repository.dart';
 
 void handlePersons(PersonRepository repo) {
   while (true) {

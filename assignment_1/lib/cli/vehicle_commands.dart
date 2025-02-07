@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'package:assignment_1/models/person.dart';
-
 import '../models/vehicle.dart';
-import '../repositories/person_repository.dart';
 import '../repositories/vehicle_repository.dart';
+import 'package:assignment_1/models/person.dart';
+import 'package:assignment_1/cli/cli_utils.dart';
 
-void handleVehicles(VehicleRepository repo, PersonRepository personRepo) {
+void handleVehicles(VehicleRepository repo) {
   while (true) {
     print('\nVehicle handling. How can I help you?');
     print('1. Create vehicle.');
@@ -81,14 +80,10 @@ void _updateVehicle(VehicleRepository repo) {
     stdout.write('New ID (current ID: ${vehicle.owner.id}):');
     var newId = stdin.readLineSync();
 
-    bool isRegNrValid = newRegNr != null && newRegNr.isNotEmpty;
-    bool isNameValid = newName != null && newName.isNotEmpty;
-    bool isIdValid = newId != null && newId.isNotEmpty;
-
-    if (isRegNrValid && isNameValid && isIdValid) {
-      vehicle.registrationNumber = newRegNr;
-      vehicle.owner.name = newName;
-      vehicle.owner.id = newId;
+    if (isValid(newRegNr) && isValid(newName) && isValid(newId)) {
+      vehicle.registrationNumber = newRegNr!;
+      vehicle.owner.name = newName!;
+      vehicle.owner.id = newId!;
       repo.update(vehicle);
       print('Vehicle updated: ${vehicle.registrationNumber}');
       print('Owner name updated: ${vehicle.owner.name}');
@@ -108,7 +103,7 @@ void _deleteVehicle(VehicleRepository repo) {
 
   if (vehicle != null) {
     repo.delete(regNr ?? '');
-    print('Vehicle deleted: ${vehicle.registrationNumber}');
+    print('Vehicle with RegNr ${vehicle.registrationNumber} deleted!');
   } else {
     print('Vehicle with RegNr $regNr not found');
   }
