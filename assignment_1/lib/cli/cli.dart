@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:assignment_1/utils/data_initialisation.dart';
+
 import '../repositories/parking_space_repository.dart';
 import '../repositories/person_repository.dart';
 import '../repositories/vehicle_repository.dart';
@@ -13,6 +15,9 @@ void runCLI() {
   var vehicleRepo = VehicleRepository();
   var parkingRepo = ParkingRepository();
   var parkingSpaceRepo = ParkingSpaceRepository();
+
+  // Initialize data
+  initializeData(personRepo, vehicleRepo, parkingSpaceRepo);
 
   while (true) {
     print('\nWellcome to the Parking App!');
