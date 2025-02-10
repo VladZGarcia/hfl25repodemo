@@ -5,11 +5,10 @@ class PersonRepository {
 
   void addPerson(Person person) => persons.add(person);
   List<Person> getAll() => persons;
-  Person? getById(String id) => persons.firstWhere((p) => p.id == id,
-      orElse: () => throw Exception('Person not found'));
+  Person? getById(int id) => persons.cast<Person?>().firstWhere((p) => p?.id == id, orElse: () => null);
   void update(Person person) {
     var index = persons.indexWhere((p) => p.id == person.id);
     if (index != -1) persons[index] = person;
   }
-  void delete(String id) => persons.removeWhere((p) => p.id == id);
+  void delete(int id) => persons.removeWhere((p) => p.id == id);
 }

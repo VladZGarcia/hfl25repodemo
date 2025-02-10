@@ -15,10 +15,12 @@ void runCLI() {
   var parkingSpaceRepo = ParkingSpaceRepository();
 
   while (true) {
-    print('Wellcome to the Parking App!');
+    print('\nWellcome to the Parking App!');
     print('Select an option:');
     print('1. Handle Persons?');
     print('2. Handle Vehicles?');
+    print('3. Handle Parking?');
+    print('4. Handle Parking spaces?');
     print('5. Quit.');
     stdout.write('Choose alternativ (1-5): ');
     var choice = stdin.readLineSync();
@@ -39,7 +41,7 @@ void runCLI() {
       case '5':
         exit(0);
       default:
-        print('Not valid, try again.');
+        print('\nNot valid, try again.');
     }
   }
 }

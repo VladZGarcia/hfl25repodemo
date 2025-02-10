@@ -5,8 +5,8 @@ class ParkingRepository {
 
   void addParking(Parking parking) => parkings.add(parking);
   List<Parking> getAll() => parkings;
-  Parking? getById(String id) => parkings.firstWhere((p) => p.id == id,
-      orElse: () => throw Exception('Parking not found'));
+  Parking? getById(String id) => parkings.cast<Parking?> ().firstWhere((p) => p?.id == id,
+      orElse: () => null);
   void update(Parking parking) {
     var index = parkings.indexWhere((p) => p.id == parking.id);
     if (index != -1) parkings[index] = parking;
