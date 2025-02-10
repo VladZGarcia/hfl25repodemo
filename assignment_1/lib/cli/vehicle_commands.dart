@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'package:assignment_1/models/person.dart';
-
 import '../models/vehicle.dart';
-import '../repositories/person_repository.dart';
 import '../repositories/vehicle_repository.dart';
+import 'package:assignment_1/models/person.dart';
+import 'package:assignment_1/cli/cli_utils.dart';
 
-void handleVehicles(VehicleRepository repo, PersonRepository personRepo) {
+void handleVehicles(VehicleRepository repo) {
   while (true) {
     print('\nVehicle handling. How can I help you?');
     print('1. Create vehicle.');
@@ -32,44 +31,45 @@ void handleVehicles(VehicleRepository repo, PersonRepository personRepo) {
       case '5':
         return;
       default:
-        print('Not valid, try again.');
+        print('\nNot valid, try again.');
     }
   }
 }
 
 void _createVehicle(VehicleRepository repo) {
-  stdout.write('Enter RegNr: ');
+  stdout.write('\nEnter RegNr: ');
   var regNr = stdin.readLineSync();
   stdout.write('Enter owner name: ');
   var ownerName = stdin.readLineSync();
   stdout.write('Enter owner ID: ');
-  var ownerId = stdin.readLineSync();
+  var ownerIdInput = stdin.readLineSync();
+  int? ownerId = int.tryParse(ownerIdInput!);
 
   if (regNr != null && ownerName != null && ownerId != null) {
     var vehicle = Vehicle(regNr, Person(ownerName, ownerId));
     repo.addVehicle(vehicle);
-    print('Vehicle created: ${vehicle.registrationNumber}');
+    print('\nVehicle created: ${vehicle.registrationNumber}');
     print('Owner name: ${vehicle.owner.name} Owner ID: ${vehicle.owner.id}');
   } else {
-    print('Invalid input, try again.');
+    print('\nInvalid input, try again.');
   }
 }
 
 void _showAllVehicle(VehicleRepository repo) {
   var vehicles = repo.getAll();
   if (vehicles.isEmpty) {
-    print('No vehicles found!');
+    print('\nNo vehicles found!');
   } else {
-    print('List of vehicles:');
+    print('\nList of vehicles:');
     for (var vehicle in vehicles) {
-      print('RegNr: ${vehicle.registrationNumber}');
+      print('\nRegNr: ${vehicle.registrationNumber}');
       print('Owner name: ${vehicle.owner.name} Owner ID: ${vehicle.owner.id}');
     }
   }
 }
 
 void _updateVehicle(VehicleRepository repo) {
-  stdout.write('Input vehicle RegNr to update: ');
+  stdout.write('\nInput vehicle RegNr to update: ');
   var regNr = stdin.readLineSync();
   var vehicle = repo.getById(regNr ?? '');
 
@@ -79,37 +79,34 @@ void _updateVehicle(VehicleRepository repo) {
     stdout.write('New Name (current name: ${vehicle.owner.name}):');
     var newName = stdin.readLineSync();
     stdout.write('New ID (current ID: ${vehicle.owner.id}):');
-    var newId = stdin.readLineSync();
+    var newIdInput = stdin.readLineSync();
+    int? newId = int.tryParse(newIdInput!);
 
-    bool isRegNrValid = newRegNr != null && newRegNr.isNotEmpty;
-    bool isNameValid = newName != null && newName.isNotEmpty;
-    bool isIdValid = newId != null && newId.isNotEmpty;
-
-    if (isRegNrValid && isNameValid && isIdValid) {
-      vehicle.registrationNumber = newRegNr;
-      vehicle.owner.name = newName;
+    if (isValid(newRegNr) && isValid(newName) && newId != null) {
+      vehicle.registrationNumber = newRegNr!;
+      vehicle.owner.name = newName!;
       vehicle.owner.id = newId;
       repo.update(vehicle);
-      print('Vehicle updated: ${vehicle.registrationNumber}');
+      print('\nVehicle updated: ${vehicle.registrationNumber}');
       print('Owner name updated: ${vehicle.owner.name}');
       print('Owner ID updated: ${vehicle.owner.id}');
     } else {
-      print('RegNr not valid.');
+      print('\nRegNr not valid.');
     }
   } else {
-    print('Vehicle with RegNr $regNr not found.');
+    print('\nVehicle with RegNr $regNr not found.');
   }
 }
 
 void _deleteVehicle(VehicleRepository repo) {
-  stdout.write('Input RegNr for vehicle to delete: ');
+  stdout.write('\nInput RegNr for vehicle to delete: ');
   var regNr = stdin.readLineSync();
   var vehicle = repo.getById(regNr ?? '');
 
   if (vehicle != null) {
     repo.delete(regNr ?? '');
-    print('Vehicle deleted: ${vehicle.registrationNumber}');
+    print('\nVehicle with RegNr ${vehicle.registrationNumber} deleted!');
   } else {
-    print('Vehicle with RegNr $regNr not found');
+    print('\nVehicle with RegNr $regNr not found');
   }
 }
