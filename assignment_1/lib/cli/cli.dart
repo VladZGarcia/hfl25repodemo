@@ -38,7 +38,7 @@ void runCLI() {
         handleVehicles(vehicleRepo);
         break;
       case '3':
-        handleParking(parkingRepo);
+        handleParking(parkingRepo, parkingSpaceRepo, vehicleRepo);
         break;
       case '4':
         handleParkingSpace(parkingSpaceRepo);
