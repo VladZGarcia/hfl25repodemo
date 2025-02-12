@@ -1,7 +1,8 @@
 class Parkingspace {
-  String id;
+  final String id;
+  String spaceId;
   String adress;
   int pricePerHour;
 
-  Parkingspace(this.id, this.adress, this.pricePerHour);
+  Parkingspace(this.id, this.spaceId, this.adress, this.pricePerHour);
 }

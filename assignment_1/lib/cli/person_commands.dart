@@ -1,7 +1,9 @@
 import 'dart:io';
 import '../models/person.dart';
 import '../repositories/person_repository.dart';
+import 'package:uuid/uuid.dart';
 
+final uuid = Uuid();
 void handlePersons(PersonRepository repo) {
   while (true) {
     print('\nPerson handling. How can I help you?');
@@ -39,12 +41,12 @@ void _createPerson(PersonRepository repo) {
   var name = stdin.readLineSync();
   stdout.write('Enter ID: ');
   var idNrInput = stdin.readLineSync();
-  int? idNr = int.tryParse(idNrInput!);
+  int? personId = int.tryParse(idNrInput!);
 
-  if (name != null && idNr != null) {
-    var person = Person(name, idNr);
+  if (name != null && personId != null) {
+    var person = Person(uuid.v4(),name, personId);
     repo.addPerson(person);
-    print('\nPerson created: $name, $idNr');
+    print('\nPerson created: $name, $personId');
   } else {
     print('\nInvalid input, try again.');
   }
@@ -57,7 +59,7 @@ void _showAllPerson(PersonRepository repo) {
   } else {
     print('\nList of persons:');
     for (var person in persons) {
-      print('\nName: ${person.name}, IDnr: ${person.id}');
+      print('\nName: ${person.name}, IDnr: ${person.personId}');
     }
   }
 }
@@ -69,12 +71,16 @@ void _updatePerson(PersonRepository repo) {
   if (idNr != null) {
     var person = repo.getById(idNr);
     if (person != null) {
+      stdout.write('New ID (current ID: ${person.personId}):');
+    var newPersonIdInput = stdin.readLineSync();
+    int? newPersonId = int.tryParse(newPersonIdInput!);
       stdout.write('New Name (current name: ${person.name}):');
       var newName = stdin.readLineSync();
       if (newName != null && newName.isNotEmpty) {
         person.name = newName;
+        person.personId = newPersonId!;
         repo.update(person);
-        print('\nPerson updated: ${person.name}, ${person.id}');
+        print('\nPerson updated: ${person.name}, ${person.personId}');
       } else {
         print('\nName not valid.');
       }
@@ -94,10 +100,10 @@ void _deletePerson(PersonRepository repo) {
     var person = repo.getById(idNr);
     if (person != null) {
       repo.delete(idNr);
-      print('\nPerson deleted: ${person.name}, ${person.id}');
-    }else {
-    print('\nPerson with ID "$idNrInput" not found');
-  }
+      print('\nPerson deleted: ${person.name}, ${person.personId}');
+    } else {
+      print('\nPerson with ID "$idNrInput" not found');
+    }
   } else {
     print('\nPerson with ID "$idNrInput" not found');
   }

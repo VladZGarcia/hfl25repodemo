@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:assignment_1/models/parking_space.dart';
 import 'package:assignment_1/repositories/parking_space_repository.dart';
-
 import 'cli_utils.dart';
+import 'package:uuid/uuid.dart';
+
+final uuid = Uuid();
 
 void handleParkingSpace(ParkingSpaceRepository repo) {
   while (true) {
@@ -50,13 +52,13 @@ void _createParkingSpace(ParkingSpaceRepository repo) {
     var pricePerHour = int.tryParse(pricePerHourInput);
     if (pricePerHour != null) {
       var parkingSpace =
-          Parkingspace(parkingSpaceId, parkingSpaceAdress, pricePerHour);
+          Parkingspace(uuid.v4(),parkingSpaceId, parkingSpaceAdress, pricePerHour);
 
       repo.addParkingSpace(parkingSpace);
-      print('\nParking space created ID: ${parkingSpace.id}');
+      print('\nParking space created ID: ${parkingSpace.spaceId}');
       print('Parking space adress: ${parkingSpace.adress}');
       print('Price per hour: ${parkingSpace.pricePerHour}');
-    }  else {
+    } else {
       print('\nPrice per hour has to be a number, try again.');
     }
   } else {
@@ -71,7 +73,7 @@ void _showAllParkingSpaces(ParkingSpaceRepository repo) {
   } else {
     print('\nList of parking spaces:');
     for (var parkingSpace in parkingSpaces) {
-      print('\nParking space ID: ${parkingSpace.id}');
+      print('\nParking space ID: ${parkingSpace.spaceId}');
       print('Parking space Adress: ${parkingSpace.adress}');
       print('Price per hour: ${parkingSpace.pricePerHour}');
     }
@@ -84,21 +86,24 @@ void _updateParkingSpace(ParkingSpaceRepository repo) {
   var parkingSpace = repo.getById(parkingSpaceId ?? '');
 
   if (parkingSpace != null) {
-    stdout.write('New parking space ID (current ID: ${parkingSpace.id}):');
+    stdout.write('New parking space ID (current ID: ${parkingSpace.spaceId}):');
     var newParkingSpaceId = stdin.readLineSync();
     stdout.write('New adress (current adress: ${parkingSpace.adress}):');
     var newAdress = stdin.readLineSync();
-    stdout.write('New price per hour (current price per hour: ${parkingSpace.pricePerHour}):');
+    stdout.write(
+        'New price per hour (current price per hour: ${parkingSpace.pricePerHour}):');
     var newPricePerHourInput = stdin.readLineSync();
 
-    if (isValid(newParkingSpaceId) && isValid(newAdress) && isValid(newPricePerHourInput)) {
+    if (isValid(newParkingSpaceId) &&
+        isValid(newAdress) &&
+        isValid(newPricePerHourInput)) {
       var newPricePerHour = int.tryParse(newPricePerHourInput!);
-      
-      parkingSpace.id = newParkingSpaceId!;
+
+      parkingSpace.spaceId = newParkingSpaceId!;
       parkingSpace.adress = newAdress!;
       parkingSpace.pricePerHour = newPricePerHour!;
       repo.update(parkingSpace);
-      print('\nParking space ID updated: ${parkingSpace.id}');
+      print('\nParking space ID updated: ${parkingSpace.spaceId}');
       print('Parking space Adress updated: ${parkingSpace.adress}');
       print('Owner ID updated: ${parkingSpace.pricePerHour}');
     } else {
@@ -116,7 +121,7 @@ void _deleteParkingSpace(ParkingSpaceRepository repo) {
 
   if (parkingSpace != null) {
     repo.delete(parkingSpaceId ?? '');
-    print('\nParking space with ID: ${parkingSpace.id} deleted');
+    print('\nParking space with ID: ${parkingSpace.spaceId} deleted');
   } else {
     print('\nParking space with ID: $parkingSpaceId not found');
   }
