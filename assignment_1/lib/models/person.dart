@@ -1,9 +1,10 @@
 class Person {
+  final String id;
   String name;
   /* String address;
   String email;
   String phone; */
-  int id;
+  int personId;
 
-  Person(this.name, /* this.address, this.email, this.phone, */ this.id);
+  Person(this.id, this.name, /* this.address, this.email, this.phone, */ this.personId);
 }

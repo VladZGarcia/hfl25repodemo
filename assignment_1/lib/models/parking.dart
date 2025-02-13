@@ -2,7 +2,7 @@ import '../models/vehicle.dart';
 import 'parking_space.dart';
 
 class Parking {
-  String id;
+  final String id;
   Vehicle vehicle;
   Parkingspace parkingSpace;
   DateTime startTime;
