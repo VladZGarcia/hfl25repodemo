@@ -47,8 +47,8 @@ void _createVehicle(VehicleRepository repo) {
   var ownerIdInput = stdin.readLineSync();
   int? ownerId = int.tryParse(ownerIdInput!);
 
-  if (regNr != null && ownerName != null && ownerId != null) {
-    var vehicle = Vehicle(uuid.v4(), regNr, Person(uuid.v4(),ownerName, ownerId));
+  if (isValid(regNr) && isValid(ownerName) && isValid(ownerId)) {
+    var vehicle = Vehicle(uuid.v4(), regNr!, Person(uuid.v4(),ownerName!, ownerId!));
     repo.addVehicle(vehicle);
     print('\nVehicle created: ${vehicle.registrationNumber}');
     print(
@@ -60,15 +60,15 @@ void _createVehicle(VehicleRepository repo) {
 
 void _showAllVehicle(VehicleRepository repo) {
   var vehicles = repo.getAll();
-  if (vehicles.isEmpty) {
-    print('\nNo vehicles found!');
-  } else {
+  if (isValid(vehicles)) {
     print('\nList of vehicles:');
     for (var vehicle in vehicles) {
       print('\nRegNr: ${vehicle.registrationNumber}');
       print(
           'Owner name: ${vehicle.owner.name} Owner ID: ${vehicle.owner.personId}');
     }
+  } else {
+    print('\nNo vehicles found!');
   }
 }
 
@@ -77,19 +77,19 @@ void _updateVehicle(VehicleRepository repo) {
   var regNr = stdin.readLineSync();
   var vehicle = repo.getById(regNr ?? '');
 
-  if (vehicle != null) {
-    stdout.write('New RegNr (current RegNr: ${vehicle.registrationNumber}):');
+  if (isValid(vehicle)) {
+    stdout.write('New RegNr (current RegNr: ${vehicle!.registrationNumber}):');
     var newRegNr = stdin.readLineSync();
-    stdout.write('New Name (current name: ${vehicle.owner.name}):');
+    stdout.write('New Owner Name (current name: ${vehicle.owner.name}):');
     var newName = stdin.readLineSync();
-    stdout.write('New ID (current ID: ${vehicle.owner.personId}):');
+    stdout.write('New Owner ID (current ID: ${vehicle.owner.personId}):');
     var newIdInput = stdin.readLineSync();
     int? newId = int.tryParse(newIdInput!);
 
-    if (isValid(newRegNr) && isValid(newName) && newId != null) {
+    if (isValid(newRegNr) && isValid(newName) && isValid(newId)) {
       vehicle.registrationNumber = newRegNr!;
       vehicle.owner.name = newName!;
-      vehicle.owner.personId = newId;
+      vehicle.owner.personId = newId!;
       repo.update(vehicle);
       print('\nVehicle updated: ${vehicle.registrationNumber}');
       print('Owner name updated: ${vehicle.owner.name}');
@@ -107,9 +107,9 @@ void _deleteVehicle(VehicleRepository repo) {
   var regNr = stdin.readLineSync();
   var vehicle = repo.getById(regNr ?? '');
 
-  if (vehicle != null) {
+  if (isValid(vehicle)) {
     repo.delete(regNr ?? '');
-    print('\nVehicle with RegNr ${vehicle.registrationNumber} deleted!');
+    print('\nVehicle with RegNr ${vehicle!.registrationNumber} deleted!');
   } else {
     print('\nVehicle with RegNr $regNr not found');
   }
