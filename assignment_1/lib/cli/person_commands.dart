@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:assignment_1/cli/cli_utils.dart';
+
 import '../models/person.dart';
 import '../repositories/person_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -68,16 +70,16 @@ void _updatePerson(PersonRepository repo) {
   stdout.write('\nInput ID number to update: ');
   var idNrInput = stdin.readLineSync();
   int? idNr = int.tryParse(idNrInput!);
-  if (idNr != null) {
-    var person = repo.getById(idNr);
-    if (person != null) {
-      stdout.write('New ID (current ID: ${person.personId}):');
+  if (isValid(idNr)) {
+    var person = repo.getById(idNr!);
+    if (isValid(person)){
+      stdout.write('New ID (current ID: ${person!.personId}):');
     var newPersonIdInput = stdin.readLineSync();
     int? newPersonId = int.tryParse(newPersonIdInput!);
       stdout.write('New Name (current name: ${person.name}):');
       var newName = stdin.readLineSync();
-      if (newName != null && newName.isNotEmpty) {
-        person.name = newName;
+      if (isValid(newName)) {
+        person.name = newName!;
         person.personId = newPersonId!;
         repo.update(person);
         print('\nPerson updated: ${person.name}, ${person.personId}');
@@ -96,8 +98,8 @@ void _deletePerson(PersonRepository repo) {
   stdout.write('\nInput ID for Person to delete: ');
   var idNrInput = stdin.readLineSync();
   int? idNr = int.tryParse(idNrInput!);
-  if (idNr != null) {
-    var person = repo.getById(idNr);
+  if (isValid(idNr)) {
+    var person = repo.getById(idNr!);
     if (person != null) {
       repo.delete(idNr);
       print('\nPerson deleted: ${person.name}, ${person.personId}');
