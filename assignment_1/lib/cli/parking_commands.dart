@@ -77,8 +77,7 @@ void _createParking(ParkingRepository repo,
         'Enter parking time in hours or just enter for ongoing parking: ');
     var parkingHourInput = stdin.readLineSync();
     var parkingHour = int.tryParse(parkingHourInput ?? '');
-    print('parkingTime: $parkingHourInput');
-    print('parkingHour: $parkingHour');
+    
     if (isValid(parkingHour)) {
       DateTime endTime =
           startTime.add(Duration(hours: int.parse(parkingHourInput!)));
