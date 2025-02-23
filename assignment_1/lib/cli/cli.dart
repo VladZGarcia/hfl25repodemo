@@ -10,7 +10,7 @@ import 'person_commands.dart';
 import 'vehicle_commands.dart';
 import 'parking_space_commands.dart';
 
-void runCLI() {
+Future<void> runCLI() async{
   var personRepo = PersonRepository();
   var vehicleRepo = VehicleRepository();
   var parkingRepo = ParkingRepository();
@@ -32,16 +32,16 @@ void runCLI() {
 
     switch (choice) {
       case '1':
-        handlePersons(personRepo);
+        await handlePersons(personRepo);
         break;
       case '2':
-        handleVehicles(vehicleRepo);
+        await handleVehicles(vehicleRepo);
         break;
       case '3':
-        handleParking(parkingRepo, parkingSpaceRepo, vehicleRepo);
+        await handleParking(parkingRepo, parkingSpaceRepo, vehicleRepo);
         break;
       case '4':
-        handleParkingSpace(parkingSpaceRepo);
+        await handleParkingSpace(parkingSpaceRepo);
         break;
       case '5':
         exit(0);

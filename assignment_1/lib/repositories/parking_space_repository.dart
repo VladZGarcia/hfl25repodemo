@@ -1,19 +1,19 @@
-import 'package:assignment_1/models/parking_space.dart';
+import 'package:shared/cli_shared.dart';
 
 class ParkingSpaceRepository {
   List<Parkingspace> parkingSpaces = [];
 
-  void addParkingSpace(Parkingspace parkingspace) =>
+  Future<void> addParkingSpace(Parkingspace parkingspace) async =>
       parkingSpaces.add(parkingspace);
-  List<Parkingspace> getAll() => parkingSpaces;
-  Parkingspace? getById(String id) => parkingSpaces
+  Future<List<Parkingspace>> getAll() async => parkingSpaces;
+  Future<Parkingspace?> getById(String id) async => parkingSpaces
       .cast<Parkingspace?>()
       .firstWhere((p) => p?.spaceId == id, orElse: () => null);
-  void update(Parkingspace parkingspace) {
+  Future<void> update(Parkingspace parkingspace) async {
     var index =
         parkingSpaces.indexWhere((p) => p.spaceId == parkingspace.spaceId);
     if (index != -1) parkingSpaces[index] = parkingspace;
   }
 
-  void delete(String id) => parkingSpaces.removeWhere((p) => p.spaceId == id);
+  Future<void> delete(String id) async => parkingSpaces.removeWhere((p) => p.spaceId == id);
 }

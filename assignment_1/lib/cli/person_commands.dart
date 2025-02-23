@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'package:assignment_1/cli/cli_utils.dart';
-
-import '../models/person.dart';
+import 'package:shared/cli_shared.dart';
 import '../repositories/person_repository.dart';
 import 'package:uuid/uuid.dart';
 
 final uuid = Uuid();
-void handlePersons(PersonRepository repo) {
+Future<void> handlePersons(PersonRepository repo) async {
   while (true) {
     print('\nPerson handling. How can I help you?');
     print('1. Create person.');
@@ -19,16 +18,16 @@ void handlePersons(PersonRepository repo) {
     var choice = stdin.readLineSync();
     switch (choice) {
       case '1':
-        _createPerson(repo);
+        await _createPerson(repo);
         break;
       case '2':
-        _showAllPerson(repo);
+        await _showAllPerson(repo);
         break;
       case '3':
-        _updatePerson(repo);
+        await _updatePerson(repo);
         break;
       case '4':
-        _deletePerson(repo);
+        await _deletePerson(repo);
         break;
       case '5':
         return;
@@ -38,7 +37,7 @@ void handlePersons(PersonRepository repo) {
   }
 }
 
-void _createPerson(PersonRepository repo) {
+Future<void> _createPerson(PersonRepository repo) async{
   stdout.write('\nEnter name: ');
   var name = stdin.readLineSync();
   stdout.write('Enter ID: ');
@@ -47,15 +46,15 @@ void _createPerson(PersonRepository repo) {
 
   if (name != null && personId != null) {
     var person = Person(uuid.v4(),name, personId);
-    repo.addPerson(person);
+    await repo.addPerson(person);
     print('\nPerson created: $name, $personId');
   } else {
     print('\nInvalid input, try again.');
   }
 }
 
-void _showAllPerson(PersonRepository repo) {
-  var persons = repo.getAll();
+Future<void> _showAllPerson(PersonRepository repo) async {
+  var persons = await repo.getAll();
   if (persons.isEmpty) {
     print('\nNo persons found!');
   } else {
@@ -66,12 +65,12 @@ void _showAllPerson(PersonRepository repo) {
   }
 }
 
-void _updatePerson(PersonRepository repo) {
+Future<void> _updatePerson(PersonRepository repo) async {
   stdout.write('\nInput ID number to update: ');
   var idNrInput = stdin.readLineSync();
   int? idNr = int.tryParse(idNrInput!);
   if (isValid(idNr)) {
-    var person = repo.getById(idNr!);
+    var person = await repo.getById(idNr!);
     if (isValid(person)){
       stdout.write('New ID (current ID: ${person!.personId}):');
     var newPersonIdInput = stdin.readLineSync();
@@ -94,12 +93,12 @@ void _updatePerson(PersonRepository repo) {
   }
 }
 
-void _deletePerson(PersonRepository repo) {
+Future<void> _deletePerson(PersonRepository repo) async{
   stdout.write('\nInput ID for Person to delete: ');
   var idNrInput = stdin.readLineSync();
   int? idNr = int.tryParse(idNrInput!);
   if (isValid(idNr)) {
-    var person = repo.getById(idNr!);
+    var person = await repo.getById(idNr!);
     if (person != null) {
       repo.delete(idNr);
       print('\nPerson deleted: ${person.name}, ${person.personId}');

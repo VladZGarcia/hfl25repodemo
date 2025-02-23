@@ -1,4 +1,4 @@
-import 'package:assignment_1/models/person.dart';
+import 'person.dart';
 
 class Vehicle {
   final String id;

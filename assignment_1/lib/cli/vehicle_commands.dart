@@ -1,12 +1,11 @@
 import 'dart:io';
-import '../models/vehicle.dart';
+import 'package:shared/cli_shared.dart';
 import '../repositories/vehicle_repository.dart';
-import 'package:assignment_1/models/person.dart';
 import 'package:assignment_1/cli/cli_utils.dart';
 import 'package:uuid/uuid.dart';
 
 final uuid = Uuid();
-void handleVehicles(VehicleRepository repo) {
+Future<void> handleVehicles(VehicleRepository repo) async {
   while (true) {
     print('\nVehicle handling. How can I help you?');
     print('1. Create vehicle.');
@@ -19,16 +18,16 @@ void handleVehicles(VehicleRepository repo) {
     var choice = stdin.readLineSync();
     switch (choice) {
       case '1':
-        _createVehicle(repo);
+        await _createVehicle(repo);
         break;
       case '2':
-        _showAllVehicle(repo);
+        await _showAllVehicle(repo);
         break;
       case '3':
-        _updateVehicle(repo);
+        await _updateVehicle(repo);
         break;
       case '4':
-        _deleteVehicle(repo);
+        await _deleteVehicle(repo);
         break;
       case '5':
         return;
@@ -38,7 +37,7 @@ void handleVehicles(VehicleRepository repo) {
   }
 }
 
-void _createVehicle(VehicleRepository repo) {
+Future<void> _createVehicle(VehicleRepository repo) async{
   stdout.write('\nEnter RegNr: ');
   var regNr = stdin.readLineSync();
   stdout.write('Enter owner name: ');
@@ -49,7 +48,7 @@ void _createVehicle(VehicleRepository repo) {
 
   if (isValid(regNr) && isValid(ownerName) && isValid(ownerId)) {
     var vehicle = Vehicle(uuid.v4(), regNr!, Person(uuid.v4(),ownerName!, ownerId!));
-    repo.addVehicle(vehicle);
+    await repo.addVehicle(vehicle);
     print('\nVehicle created: ${vehicle.registrationNumber}');
     print(
         'Owner name: ${vehicle.owner.name} Owner ID: ${vehicle.owner.personId}');
@@ -58,8 +57,8 @@ void _createVehicle(VehicleRepository repo) {
   }
 }
 
-void _showAllVehicle(VehicleRepository repo) {
-  var vehicles = repo.getAll();
+Future<void> _showAllVehicle(VehicleRepository repo) async{
+  var vehicles = await repo.getAll();
   if (isValid(vehicles)) {
     print('\nList of vehicles:');
     for (var vehicle in vehicles) {
@@ -72,10 +71,10 @@ void _showAllVehicle(VehicleRepository repo) {
   }
 }
 
-void _updateVehicle(VehicleRepository repo) {
+Future<void> _updateVehicle(VehicleRepository repo) async{
   stdout.write('\nInput vehicle RegNr to update: ');
   var regNr = stdin.readLineSync();
-  var vehicle = repo.getById(regNr ?? '');
+  var vehicle = await repo.getById(regNr ?? '');
 
   if (isValid(vehicle)) {
     stdout.write('New RegNr (current RegNr: ${vehicle!.registrationNumber}):');
@@ -102,10 +101,10 @@ void _updateVehicle(VehicleRepository repo) {
   }
 }
 
-void _deleteVehicle(VehicleRepository repo) {
+Future<void> _deleteVehicle(VehicleRepository repo) async {
   stdout.write('\nInput RegNr for vehicle to delete: ');
   var regNr = stdin.readLineSync();
-  var vehicle = repo.getById(regNr ?? '');
+  var vehicle = await repo.getById(regNr ?? '');
 
   if (isValid(vehicle)) {
     repo.delete(regNr ?? '');

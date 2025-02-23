@@ -1,14 +1,14 @@
-import '../models/vehicle.dart';
+import 'package:shared/cli_shared.dart';
 
 class VehicleRepository {
   List<Vehicle> vehicles = [];
 
-  void addVehicle(Vehicle vehicle) => vehicles.add(vehicle);
-  List<Vehicle> getAll() => vehicles;
-  Vehicle? getById(String regNr) => vehicles.cast<Vehicle?>().firstWhere((v) => v?.registrationNumber == regNr, orElse: () => null);
-  void update(Vehicle vehicle) {
+  Future<void> addVehicle(Vehicle vehicle) async => vehicles.add(vehicle);
+  Future<List<Vehicle>> getAll() async => vehicles;
+  Future<Vehicle?> getById(String regNr) async => vehicles.cast<Vehicle?>().firstWhere((v) => v?.registrationNumber == regNr, orElse: () => null);
+  Future<void> update(Vehicle vehicle) async {
     var index = vehicles.indexWhere((v) => v.registrationNumber == vehicle.registrationNumber);
     if (index != -1) vehicles[index] = vehicle;
   }
-  void delete(String regNr) => vehicles.removeWhere((v) => v.registrationNumber == regNr);
+  Future<void> delete(String regNr) async => vehicles.removeWhere((v) => v.registrationNumber == regNr);
 }

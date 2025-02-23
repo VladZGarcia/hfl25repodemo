@@ -1,12 +1,12 @@
 import 'dart:io';
-import 'package:assignment_1/models/parking_space.dart';
 import 'package:assignment_1/repositories/parking_space_repository.dart';
+import 'package:shared/cli_shared.dart';
 import 'cli_utils.dart';
 import 'package:uuid/uuid.dart';
 
 final uuid = Uuid();
 
-void handleParkingSpace(ParkingSpaceRepository repo) {
+Future<void> handleParkingSpace(ParkingSpaceRepository repo) async {
   while (true) {
     print('\nParking space handling. How can I help you?');
     print('1. Create parking space.');
@@ -19,16 +19,16 @@ void handleParkingSpace(ParkingSpaceRepository repo) {
     var choice = stdin.readLineSync();
     switch (choice) {
       case '1':
-        _createParkingSpace(repo);
+        await _createParkingSpace(repo);
         break;
       case '2':
-        _showAllParkingSpaces(repo);
+        await _showAllParkingSpaces(repo);
         break;
       case '3':
-        _updateParkingSpace(repo);
+        await _updateParkingSpace(repo);
         break;
       case '4':
-        _deleteParkingSpace(repo);
+        await _deleteParkingSpace(repo);
         break;
       case '5':
         return;
@@ -38,7 +38,7 @@ void handleParkingSpace(ParkingSpaceRepository repo) {
   }
 }
 
-void _createParkingSpace(ParkingSpaceRepository repo) {
+Future<void> _createParkingSpace(ParkingSpaceRepository repo) async {
   stdout.write('\nEnter parking space ID: ');
   var parkingSpaceId = stdin.readLineSync();
   stdout.write('Enter adress: ');
@@ -54,7 +54,7 @@ void _createParkingSpace(ParkingSpaceRepository repo) {
       var parkingSpace =
           Parkingspace(uuid.v4(),parkingSpaceId!, parkingSpaceAdress!, pricePerHour);
 
-      repo.addParkingSpace(parkingSpace);
+      await repo.addParkingSpace(parkingSpace);
       print('\nParking space created ID: ${parkingSpace.spaceId}');
       print('Parking space adress: ${parkingSpace.adress}');
       print('Price per hour: ${parkingSpace.pricePerHour}');
@@ -66,8 +66,8 @@ void _createParkingSpace(ParkingSpaceRepository repo) {
   }
 }
 
-void _showAllParkingSpaces(ParkingSpaceRepository repo) {
-  var parkingSpaces = repo.getAll();
+Future<void> _showAllParkingSpaces(ParkingSpaceRepository repo) async{
+  var parkingSpaces = await repo.getAll();
   if (isValid(parkingSpaces)) {
     print('\nList of parking spaces:');
     for (var parkingSpace in parkingSpaces) {
@@ -80,10 +80,10 @@ void _showAllParkingSpaces(ParkingSpaceRepository repo) {
   }
 }
 
-void _updateParkingSpace(ParkingSpaceRepository repo) {
+Future<void> _updateParkingSpace(ParkingSpaceRepository repo) async {
   stdout.write('\nInput parking space ID to update: ');
   var parkingSpaceId = stdin.readLineSync();
-  var parkingSpace = repo.getById(parkingSpaceId ?? '');
+  var parkingSpace = await repo.getById(parkingSpaceId ?? '');
 
   if (isValid(parkingSpace)) {
     stdout.write('New parking space ID (current ID: ${parkingSpace!.spaceId}):');
@@ -114,10 +114,10 @@ void _updateParkingSpace(ParkingSpaceRepository repo) {
   }
 }
 
-void _deleteParkingSpace(ParkingSpaceRepository repo) {
+Future<void> _deleteParkingSpace(ParkingSpaceRepository repo) async {
   stdout.write('\nInput ID for parking space to delete: ');
   var parkingSpaceId = stdin.readLineSync();
-  var parkingSpace = repo.getById(parkingSpaceId ?? '');
+  var parkingSpace = await repo.getById(parkingSpaceId ?? '');
 
   if (isValid(parkingSpace)) {
     repo.delete(parkingSpaceId ?? '');

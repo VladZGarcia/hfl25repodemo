@@ -1,6 +1,4 @@
-import '../models/person.dart';
-import '../models/vehicle.dart';
-import '../models/parking_space.dart';
+import 'package:shared/cli_shared.dart';
 import '../repositories/person_repository.dart';
 import '../repositories/vehicle_repository.dart';
 import '../repositories/parking_space_repository.dart';
