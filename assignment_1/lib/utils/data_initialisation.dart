@@ -1,4 +1,4 @@
-import 'package:shared/cli_shared.dart';
+import 'package:shared/shared.dart';
 import '../repositories/person_repository.dart';
 import '../repositories/vehicle_repository.dart';
 import '../repositories/parking_space_repository.dart';

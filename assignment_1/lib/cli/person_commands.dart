@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:assignment_1/cli/cli_utils.dart';
-import 'package:shared/cli_shared.dart';
+import 'package:shared/shared.dart';
 import '../repositories/person_repository.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,15 +18,20 @@ Future<void> handlePersons(PersonRepository repo) async {
     var choice = stdin.readLineSync();
     switch (choice) {
       case '1':
+        print('Creating person');
         await _createPerson(repo);
+
         break;
       case '2':
+        print('Showing all persons');
         await _showAllPerson(repo);
         break;
       case '3':
+        print('Updating person');
         await _updatePerson(repo);
         break;
       case '4':
+        print('Deleting person');
         await _deletePerson(repo);
         break;
       case '5':
@@ -46,8 +51,8 @@ Future<void> _createPerson(PersonRepository repo) async{
 
   if (name != null && personId != null) {
     var person = Person(uuid.v4(),name, personId);
-    await repo.addPerson(person);
-    print('\nPerson created: $name, $personId');
+    Person? returned = await repo.addPerson(person);
+    print('\nPerson created: ${returned?.name}, ${returned?.personId}');
   } else {
     print('\nInvalid input, try again.');
   }

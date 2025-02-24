@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:assignment_1/repositories/parking_space_repository.dart';
-import 'package:shared/cli_shared.dart';
+import 'package:shared/shared.dart';
 import 'cli_utils.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,15 +19,19 @@ Future<void> handleParkingSpace(ParkingSpaceRepository repo) async {
     var choice = stdin.readLineSync();
     switch (choice) {
       case '1':
+        print('Creating parking space');
         await _createParkingSpace(repo);
         break;
       case '2':
+        print('Showing all parking spaces');
         await _showAllParkingSpaces(repo);
         break;
       case '3':
+        print('Updating parking space');
         await _updateParkingSpace(repo);
         break;
       case '4':
+        print('Deleting parking space');
         await _deleteParkingSpace(repo);
         break;
       case '5':

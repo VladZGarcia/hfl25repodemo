@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:assignment_1/repositories/parking_repository.dart';
 import 'package:assignment_1/repositories/parking_space_repository.dart';
 import 'package:assignment_1/repositories/vehicle_repository.dart';
-import 'package:shared/cli_shared.dart';
+import 'package:shared/shared.dart';
 import 'package:uuid/uuid.dart';
 import 'cli_utils.dart';
 
@@ -22,15 +22,19 @@ Future<void> handleParking(ParkingRepository repo,
     var choice = stdin.readLineSync();
     switch (choice) {
       case '1':
+        print('Creating parking');
         await _createParking(repo, parkingSpaceRepo, vehicleRepo);
         break;
       case '2':
+        print('Showing all parking');
         await _showAllParkings(repo);
         break;
       case '3':
+        print('Updating parking');
         await _updateParking(repo);
         break;
       case '4':
+        print('Deleting parking');
         await _deleteParking(repo);
         break;
       case '5':

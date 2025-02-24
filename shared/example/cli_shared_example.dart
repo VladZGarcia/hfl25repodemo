@@ -1,4 +1,4 @@
-import 'package:shared/cli_shared.dart';
+import 'package:shared/shared.dart';
 
 void main() {
   var awesome = Awesome();

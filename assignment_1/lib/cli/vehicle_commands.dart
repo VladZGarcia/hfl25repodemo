@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:shared/cli_shared.dart';
+import 'package:shared/shared.dart';
 import '../repositories/vehicle_repository.dart';
 import 'package:assignment_1/cli/cli_utils.dart';
 import 'package:uuid/uuid.dart';
@@ -18,15 +18,19 @@ Future<void> handleVehicles(VehicleRepository repo) async {
     var choice = stdin.readLineSync();
     switch (choice) {
       case '1':
+        print('Creating vehicle');
         await _createVehicle(repo);
         break;
       case '2':
+        print('Showing all vehicles');
         await _showAllVehicle(repo);
         break;
       case '3':
+        print('Updating vehicle');
         await _updateVehicle(repo);
         break;
       case '4':
+        print('Deleting vehicle');
         await _deleteVehicle(repo);
         break;
       case '5':

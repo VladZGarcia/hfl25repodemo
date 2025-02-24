@@ -1,4 +1,4 @@
-import 'package:shared/cli_shared.dart';
+import 'package:shared/shared.dart';
 import 'package:test/test.dart';
 
 void main() {

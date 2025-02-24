@@ -1,10 +1,37 @@
-import 'package:shared/cli_shared.dart';
+import 'dart:convert';
+import 'package:http/http.dart';
+import 'package:shared/shared.dart';
+import 'package:http/http.dart' as http;
 
 class PersonRepository {
   List<Person> persons = [];
 
-  Future<void> addPerson(Person person) async => persons.add(person);
-  Future<List<Person>> getAll() async => persons;
+  Future<Person?> addPerson(Person person) async {
+    final url = Uri.parse('http://localhost:8080/person');
+
+    Response response = await http.post(url,
+       body: jsonEncode(person.toJson()), 
+       headers: {
+      'Content-Type': 'application/json',
+    });
+    final json = await jsonDecode(response.body);
+    print(json);
+    return Person.fromJson(json);
+    }
+  
+  Future<List<Person>> getAll() async  {
+    final url = Uri.parse('http://localhost:8080/person');
+    Response response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },);
+    final json = await jsonDecode(response.body); // decoded json list
+    final List<Person> persons = (json as List<dynamic>).map((e) => Person.fromJson(e)).toList();
+    
+    return persons;
+    }
+
   Future<Person?> getById(int id) async => persons
       .cast<Person?>()
       .firstWhere((p) => p?.personId == id, orElse: () => null);

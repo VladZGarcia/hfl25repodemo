@@ -3,12 +3,16 @@ description: A server app using the shelf package and Docker.
 version: 1.0.0
 # repository: https://github.com/my_org/my_repo
 
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
 environment:
   sdk: ^3.6.1
 
 dependencies:
   shelf: ^1.4.0
   shelf_router: ^1.1.0
+  shared:
+    path: '../shared'
 
 dev_dependencies:
   http: ^1.1.0
