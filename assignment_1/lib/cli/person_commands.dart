@@ -75,9 +75,10 @@ Future<void> _updatePerson(PersonRepository repo) async {
   var idNrInput = stdin.readLineSync();
   int? idNr = int.tryParse(idNrInput!);
   if (isValid(idNr)) {
-    var person = await repo.getById(idNr!);
+    Person person = await repo.getById(idNr!);
+    print((person.personId));
     if (isValid(person)){
-      stdout.write('New ID (current ID: ${person!.personId}):');
+      stdout.write('New ID (current ID: ${person.personId}):');
     var newPersonIdInput = stdin.readLineSync();
     int? newPersonId = int.tryParse(newPersonIdInput!);
       stdout.write('New Name (current name: ${person.name}):');
@@ -85,8 +86,8 @@ Future<void> _updatePerson(PersonRepository repo) async {
       if (isValid(newName)) {
         person.name = newName!;
         person.personId = newPersonId!;
-        repo.update(person);
-        print('\nPerson updated: ${person.name}, ${person.personId}');
+        Person returned = await repo.update(person.id, person);
+        print('\nPerson updated: ${returned.name}, ${returned.personId}');
       } else {
         print('\nName not valid.');
       }
@@ -103,14 +104,10 @@ Future<void> _deletePerson(PersonRepository repo) async{
   var idNrInput = stdin.readLineSync();
   int? idNr = int.tryParse(idNrInput!);
   if (isValid(idNr)) {
-    var person = await repo.getById(idNr!);
-    if (person != null) {
-      repo.delete(idNr);
-      print('\nPerson deleted: ${person.name}, ${person.personId}');
+    Person person = await repo.getById(idNr!);
+    Person returned = await repo.delete(person.personId);
+    print('\nPerson deleted: ${returned.name}, ${returned.personId}');
     } else {
-      print('\nPerson with ID "$idNrInput" not found');
-    }
-  } else {
     print('\nPerson with ID "$idNrInput" not found');
   }
 }

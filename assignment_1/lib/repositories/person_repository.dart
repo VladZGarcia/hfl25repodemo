@@ -4,10 +4,10 @@ import 'package:shared/shared.dart';
 import 'package:http/http.dart' as http;
 
 class PersonRepository {
-  List<Person> persons = [];
+  List<Person> persons =  [];
 
   Future<Person?> addPerson(Person person) async {
-    final url = Uri.parse('http://localhost:8080/person');
+    final url = Uri.parse('http://localhost:8080/persons');
 
     Response response = await http.post(url,
        body: jsonEncode(person.toJson()), 
@@ -15,12 +15,12 @@ class PersonRepository {
       'Content-Type': 'application/json',
     });
     final json = await jsonDecode(response.body);
-    print(json);
+    print('Person created: ${json['name']}, ${json['personId']}');
     return Person.fromJson(json);
     }
   
   Future<List<Person>> getAll() async  {
-    final url = Uri.parse('http://localhost:8080/person');
+    final url = Uri.parse('http://localhost:8080/persons');
     Response response = await http.get(
       url,
       headers: {
@@ -32,13 +32,43 @@ class PersonRepository {
     return persons;
     }
 
-  Future<Person?> getById(int id) async => persons
-      .cast<Person?>()
-      .firstWhere((p) => p?.personId == id, orElse: () => null);
-  Future<void> update(Person person) async{
-    var index = persons.indexWhere((p) => p.personId == person.personId);
-    if (index != -1) persons[index] = person;
-  }
+  Future<Person> getById(int personId) async {
+    final url = Uri.parse('http://localhost:8080/persons/${personId}');
+    Response response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },);
+      print('Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      print('Responsebody:${response.statusCode}');
 
-  Future<void> delete(int id) async => persons.removeWhere((p) => p.personId == id);
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body); // decoded json
+      return Person.fromJson(json);
+      } else {
+        throw Exception('Failed to load person with id: $personId');
+      }
+    }
+  Future<Person> update(String id, Person person) async {
+    final url = Uri.parse('http://localhost:8080/persons/${id}');
+    Response response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json'},
+        body: jsonEncode(person.toJson()),);
+    final json = await jsonDecode(response.body); // decoded json
+    return Person.fromJson(json);
+  }
+  
+  Future<Person> delete(int personId) async {
+    final url = Uri.parse('http://localhost:8080/persons/${personId}');
+    Response response = await http.delete(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },);
+    final json = await jsonDecode(response.body); // decoded json
+    return Person.fromJson(json);
+  }
 }
