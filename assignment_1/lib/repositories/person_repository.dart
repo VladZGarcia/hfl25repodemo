@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart';
 import 'package:shared/shared.dart';
 import 'package:http/http.dart' as http;
@@ -32,18 +33,18 @@ class PersonRepository {
     return persons;
     }
 
-  Future<Person> getById(int personId) async {
-    final url = Uri.parse('http://localhost:8080/persons/${personId}');
+  Future<Person?> getById(int personId) async {
+    final url = Uri.parse('http://localhost:8080/persons/$personId');
     Response response = await http.get(
       url,
       headers: {
         'Content-Type': 'application/json',
       },);
-      print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      print('Responsebody:${response.statusCode}');
 
       if (response.statusCode == 200) {
+        if (response.body.trim() == 'null') {
+          return null;
+        }
         final json = jsonDecode(response.body); // decoded json
       return Person.fromJson(json);
       } else {
@@ -51,7 +52,7 @@ class PersonRepository {
       }
     }
   Future<Person> update(String id, Person person) async {
-    final url = Uri.parse('http://localhost:8080/persons/${id}');
+    final url = Uri.parse('http://localhost:8080/persons/$id');
     Response response = await http.put(
       url,
       headers: {
@@ -61,13 +62,18 @@ class PersonRepository {
     return Person.fromJson(json);
   }
   
-  Future<Person> delete(int personId) async {
-    final url = Uri.parse('http://localhost:8080/persons/${personId}');
+  Future<Person?> delete(int personId) async {
+    final url = Uri.parse('http://localhost:8080/persons/$personId');
     Response response = await http.delete(
       url,
       headers: {
         'Content-Type': 'application/json',
       },);
+      if (response.statusCode != 200) {
+        if (response.body.trim() == 'null') {
+          return null;
+        }
+      }
     final json = await jsonDecode(response.body); // decoded json
     return Person.fromJson(json);
   }
