@@ -17,7 +17,7 @@ Future<void> runCLI() async{
   var parkingSpaceRepo = ParkingSpaceRepository();
 
   // Initialize data
-  // await initializeData(personRepo, vehicleRepo, parkingSpaceRepo);
+   //await initializeData(personRepo, vehicleRepo, parkingSpaceRepo);
 
   while (true) {
     print('\nWellcome to the Parking App!');

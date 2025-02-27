@@ -46,7 +46,7 @@ Future<Response> updatePersonHandler(Request request) async {
     final data = await request.readAsString();
     final json = jsonDecode(data);
     Person person = Person.fromJson(json);
-    Person updatedPerson = await personRepo.update(idStr, person);
+    Person updatedPerson = await personRepo.update(person);
     return Response.ok(jsonEncode(updatedPerson.toJson()));
   }
   return Response.notFound('Person not found');

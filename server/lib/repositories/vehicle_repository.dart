@@ -15,8 +15,8 @@ class VehicleRepository {
     .firstWhere((v) => v?.registrationNumber == regNr, orElse: () => null);
     
 
-  Future<Vehicle> update(String id,Vehicle vehicle) async {
-    var index = vehicles.indexWhere((v) => v.registrationNumber == vehicle.registrationNumber);
+  Future<Vehicle> update(Vehicle vehicle) async {
+    var index = vehicles.indexWhere((v) => v.id == vehicle.id);
     if (index != -1) vehicles[index] = vehicle;
     return vehicle;
   }

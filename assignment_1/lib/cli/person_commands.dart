@@ -52,7 +52,7 @@ Future<void> _createPerson(PersonRepository repo) async {
   if (name != null && personId != null) {
     var person = Person(uuid.v4(), name, personId);
     Person? returned = await repo.addPerson(person);
-    print('\nPerson created: ${returned?.name}, ${returned?.personId}');
+    print('\nPerson created: ${returned.name}, ${returned.personId}');
   } else {
     print('\nInvalid input, try again.');
   }
@@ -74,6 +74,7 @@ Future<void> _updatePerson(PersonRepository repo) async {
   stdout.write('\nInput ID number to update: ');
   var idNrInput = stdin.readLineSync();
   int? idNr = int.tryParse(idNrInput!);
+  
   if (isValid(idNr)) {
     Person? person = await repo.getById(idNr!);
     print('person id: ${person?.personId}');
@@ -86,7 +87,7 @@ Future<void> _updatePerson(PersonRepository repo) async {
       if (isValid(newName)) {
         person?.name = newName!;
         person?.personId = newPersonId!;
-        Person returned = await repo.update(person!.id, person);
+        Person returned = await repo.update(person!);
         print('\nPerson updated: ${returned.name}, ${returned.personId}');
       } else {
         print('\nName not valid.');

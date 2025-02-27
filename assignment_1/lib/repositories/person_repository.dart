@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 class PersonRepository {
   List<Person> persons =  [];
 
-  Future<Person?> addPerson(Person person) async {
+  Future<Person> addPerson(Person person) async {
     final url = Uri.parse('http://localhost:8080/persons');
 
     Response response = await http.post(url,
@@ -20,7 +20,7 @@ class PersonRepository {
     return Person.fromJson(json);
     }
   
-  Future<List<Person>> getAll() async  {
+  Future<List<Person>> getAll() async {
     final url = Uri.parse('http://localhost:8080/persons');
     Response response = await http.get(
       url,
@@ -51,8 +51,9 @@ class PersonRepository {
         throw Exception('Failed to load person with id: $personId');
       }
     }
-  Future<Person> update(String id, Person person) async {
-    final url = Uri.parse('http://localhost:8080/persons/$id');
+    
+  Future<Person> update(Person person) async {
+    final url = Uri.parse('http://localhost:8080/persons/${person.id}');
     Response response = await http.put(
       url,
       headers: {

@@ -3,17 +3,28 @@ import 'package:shared/shared.dart';
 class ParkingSpaceRepository {
   List<Parkingspace> parkingSpaces = [];
 
-  Future<void> addParkingSpace(Parkingspace parkingspace) async =>
-      parkingSpaces.add(parkingspace);
+  Future<Parkingspace> addParkingSpace(Parkingspace parkingspace) async {
+    parkingSpaces.add(parkingspace);
+    return parkingspace;
+  }
+
   Future<List<Parkingspace>> getAll() async => parkingSpaces;
-  Future<Parkingspace?> getById(String id) async => parkingSpaces
+
+  Future<Parkingspace?> getById(String spaceId) async => parkingSpaces
       .cast<Parkingspace?>()
-      .firstWhere((p) => p?.spaceId == id, orElse: () => null);
-  Future<void> update(Parkingspace parkingspace) async {
+      .firstWhere((p) => p?.spaceId == spaceId, orElse: () => null);
+
+  Future<Parkingspace> update(Parkingspace parkingspace) async {
     var index =
         parkingSpaces.indexWhere((p) => p.spaceId == parkingspace.spaceId);
     if (index != -1) parkingSpaces[index] = parkingspace;
+    return parkingspace;
   }
 
-  Future<void> delete(String id) async => parkingSpaces.removeWhere((p) => p.spaceId == id);
+  Future<Parkingspace> delete(String id) async {
+    Parkingspace removedParkingspace =
+        parkingSpaces.cast<Parkingspace>().firstWhere((p) => p.spaceId == id);
+    parkingSpaces.removeWhere((p) => p.spaceId == id);
+    return removedParkingspace;
+  }
 }

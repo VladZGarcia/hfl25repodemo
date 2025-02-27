@@ -52,10 +52,10 @@ Future<void> _createVehicle(VehicleRepository repo) async{
 
   if (isValid(regNr) && isValid(ownerName) && isValid(ownerId)) {
     var vehicle = Vehicle(uuid.v4(), regNr!, Person(uuid.v4(),ownerName!, ownerId!));
-    await repo.addVehicle(vehicle);
-    print('\nVehicle created: ${vehicle.registrationNumber}');
+    Vehicle returned = await repo.addVehicle(vehicle);
+    print('\nVehicle created: ${returned.registrationNumber}');
     print(
-        'Owner name: ${vehicle.owner.name} Owner ID: ${vehicle.owner.personId}');
+        'Owner name: ${returned.owner.name} Owner ID: ${returned.owner.personId}');
   } else {
     print('\nInvalid input, try again.');
   }
@@ -93,10 +93,10 @@ Future<void> _updateVehicle(VehicleRepository repo) async{
       vehicle.registrationNumber = newRegNr!;
       vehicle.owner.name = newName!;
       vehicle.owner.personId = newId!;
-      repo.update(vehicle);
-      print('\nVehicle updated: ${vehicle.registrationNumber}');
-      print('Owner name updated: ${vehicle.owner.name}');
-      print('Owner ID updated: ${vehicle.owner.personId}');
+      Vehicle returned = await repo.update(vehicle);
+      print('\nVehicle updated: ${returned.registrationNumber}');
+      print('Owner name updated: ${returned.owner.name}');
+      print('Owner ID updated: ${returned.owner.personId}');
     } else {
       print('\nRegNr not valid.');
     }

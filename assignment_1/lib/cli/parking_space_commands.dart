@@ -58,10 +58,10 @@ Future<void> _createParkingSpace(ParkingSpaceRepository repo) async {
       var parkingSpace =
           Parkingspace(uuid.v4(),parkingSpaceId!, parkingSpaceAdress!, pricePerHour);
 
-      await repo.addParkingSpace(parkingSpace);
-      print('\nParking space created ID: ${parkingSpace.spaceId}');
-      print('Parking space adress: ${parkingSpace.adress}');
-      print('Price per hour: ${parkingSpace.pricePerHour}');
+      Parkingspace returned = await repo.addParkingSpace(parkingSpace);
+      print('\nParking space created ID: ${returned.spaceId}');
+      print('Parking space adress: ${returned.adress}');
+      print('Price per hour: ${returned.pricePerHour}');
     } else {
       print('\nPrice per hour has to be a number, try again.');
     }
@@ -106,15 +106,15 @@ Future<void> _updateParkingSpace(ParkingSpaceRepository repo) async {
       parkingSpace.spaceId = newParkingSpaceId!;
       parkingSpace.adress = newAdress!;
       parkingSpace.pricePerHour = newPricePerHour!;
-      repo.update(parkingSpace);
-      print('\nParking space ID updated: ${parkingSpace.spaceId}');
-      print('Parking space Adress updated: ${parkingSpace.adress}');
-      print('Price per hour updated: ${parkingSpace.pricePerHour}');
+      Parkingspace returned = await repo.update(parkingSpace);
+      print('\nParking space ID updated: ${returned.spaceId}');
+      print('Parking space Adress updated: ${returned.adress}');
+      print('Price per hour updated: ${returned.pricePerHour}');
     } else {
-      print('\nRegNr not valid.');
+      print('\nSpace id not valid.');
     }
   } else {
-    print('\nVehicle with RegNr $parkingSpaceId not found.');
+    print('\nVehicle with space id $parkingSpaceId not found.');
   }
 }
 
