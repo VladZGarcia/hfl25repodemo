@@ -76,7 +76,8 @@ Future<void> _createParking(ParkingRepository repo,
   var vehicle = await vehicleRepo.getById(vehicleRegnr ?? '');
   if (isValid(parkingSpace) && isValid(vehicle)) {
     DateTime startTime = DateTime.now();
-    String formattedStartTime = formatDateTime(startTime);
+    //String formattedStartTime = formatDateTime(startTime);
+    String formattedStartTime = parkingSpace!.formatTime(startTime);
     stdout.write(
         'Enter parking time in hours or just enter for ongoing parking: ');
     var parkingHourInput = stdin.readLineSync();
@@ -85,7 +86,7 @@ Future<void> _createParking(ParkingRepository repo,
     if (isValid(parkingHour)) {
       DateTime endTime =
           startTime.add(Duration(hours: int.parse(parkingHourInput!)));
-      String formattedEndTime = formatDateTime(endTime);
+      String formattedEndTime = parkingSpace.formatTime(endTime);
       print(
           '\nParking started $formattedStartTime. Ending at $formattedEndTime. Vehicle regnr: $vehicleRegnr. Price per hour: ${parkingSpace!.pricePerHour}kr/h');
       double price = calculatePrice(

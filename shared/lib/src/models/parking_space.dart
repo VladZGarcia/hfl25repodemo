@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class Parkingspace {
   final String id;
   String spaceId;
@@ -23,4 +25,15 @@ class Parkingspace {
       'pricePerHour': pricePerHour,
     };
   }
+  
+  /// Formats a DateTime object to a string in the format HH:MM.
+  String formatTime(DateTime dateTime) {
+    final hours = dateTime.hour.toString().padLeft(2, '0');
+    final minutes = dateTime.minute.toString().padLeft(2, '0');
+    return '$hours:$minutes';
+  }
+
+  String formatDateTime(DateTime dateTime) {
+  return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+}
 }
