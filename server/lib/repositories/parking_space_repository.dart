@@ -1,7 +1,30 @@
+import 'package:server/repositories/file_repository.dart';
 import 'package:shared/shared.dart';
 
-class ParkingSpaceRepository {
-  List<Parkingspace> parkingSpaces = [];
+class ParkingSpaceRepository extends FileRepository<Parkingspace> {
+  ParkingSpaceRepository() : super('parkingspaces.json');
+
+  @override
+  Parkingspace fromJson(Map<String, dynamic> json) {
+    return Parkingspace.fromJson(json);
+  }
+
+  @override
+  String idFromType(Parkingspace item) {
+    return item.id;
+  }
+
+  @override
+  String simpleIdFromType(Parkingspace item) {
+    return item.spaceId;
+  }
+
+  @override
+  Map<String, dynamic> toJson(Parkingspace item) {
+    return item.toJson();
+  }
+
+  /* List<Parkingspace> parkingSpaces = [];
 
   Future<Parkingspace> addParkingSpace(Parkingspace parkingspace) async {
     parkingSpaces.add(parkingspace);
@@ -26,5 +49,5 @@ class ParkingSpaceRepository {
         parkingSpaces.cast<Parkingspace>().firstWhere((p) => p.spaceId == id);
     parkingSpaces.removeWhere((p) => p.spaceId == id);
     return removedParkingspace;
-  }
+  } */
 }

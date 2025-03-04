@@ -1,7 +1,30 @@
+import 'package:server/repositories/file_repository.dart';
 import 'package:shared/shared.dart';
 
-class ParkingRepository {
-  List<Parking> parkings = [];
+class ParkingRepository extends FileRepository<Parking> {
+  ParkingRepository() : super('parkings.json');
+
+  @override
+  Parking fromJson(Map<String, dynamic> json) {
+    return Parking.fromJson(json);
+  }
+
+  @override
+  String idFromType(Parking item) {
+    return item.id;
+  }
+
+  @override
+  String simpleIdFromType(Parking item) {
+    return item.vehicle.registrationNumber;
+  }
+
+  @override
+  Map<String, dynamic> toJson(Parking item) {
+    return item.toJson();
+  }
+  
+  /* List<Parking> parkings = [];
 
   Future<Parking> addParking(Parking parking) async {
     parkings.add(parking);
@@ -24,5 +47,5 @@ class ParkingRepository {
     Parking removedParking = parkings.cast<Parking>().firstWhere((p) => p.id == id);
     parkings.removeWhere((p) => p.id == id);
     return removedParking;
-    }
+    } */
 }

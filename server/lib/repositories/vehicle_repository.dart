@@ -1,7 +1,35 @@
+import 'package:server/repositories/file_repository.dart';
 import 'package:shared/shared.dart';
 
-class VehicleRepository {
-  List<Vehicle> vehicles = [];
+class VehicleRepository extends FileRepository<Vehicle> {
+  VehicleRepository() : super('vehicles.json');
+
+  @override
+  Vehicle fromJson(Map<String, dynamic> json) {
+    // TODO: implement fromJson
+    return Vehicle.fromJson(json);
+  }
+
+  @override
+  String idFromType(Vehicle item) {
+    // TODO: implement idFromType
+    return item.registrationNumber;
+  }
+
+  @override
+  String simpleIdFromType(Vehicle item) {
+    // TODO: implement personIdFromType
+    return item.registrationNumber;
+  }
+
+  @override
+  Map<String, dynamic> toJson(Vehicle item) {
+    // TODO: implement toJson
+    return item.toJson();
+  }
+
+  
+  /* List<Vehicle> vehicles = [];
 
   Future<Vehicle> addVehicle(Vehicle vehicle) async {
     vehicles.add(vehicle);
@@ -25,5 +53,5 @@ class VehicleRepository {
     Vehicle removedVehicle = vehicles.cast<Vehicle>().firstWhere((v) => v.registrationNumber == regNr);
     vehicles.removeWhere((v) => v.registrationNumber == regNr);
     return removedVehicle;
-  }
+  } */
 }

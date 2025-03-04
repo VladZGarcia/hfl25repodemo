@@ -14,7 +14,7 @@ Future<Response> createPersonHandler(Request request) async {
   Person person = Person.fromJson(json);
   print('Person created: ${person.name}, ${person.personId}');
 
-  Person? createdPerson = await personRepo.addPerson(person);
+  Person? createdPerson = await personRepo.add(person);
 
   return Response.ok(jsonEncode(createdPerson.toJson()));
 }
@@ -30,7 +30,7 @@ Future<Response> getPersonByIdHandler(Request request) async {
   if (personId != null) {
     int? id = int.tryParse(personId);
     if (id != null) {
-      Person? foundPerson = await personRepo.getById(id);
+      Person? foundPerson = await personRepo.getById(id.toString());
       print('person found: $foundPerson');
       return Response.ok(jsonEncode(foundPerson?.toJson()));
     } else {
@@ -46,22 +46,19 @@ Future<Response> updatePersonHandler(Request request) async {
     final data = await request.readAsString();
     final json = jsonDecode(data);
     Person person = Person.fromJson(json);
-    Person updatedPerson = await personRepo.update(person);
+    Person updatedPerson = await personRepo.update(person.id, person);
     return Response.ok(jsonEncode(updatedPerson.toJson()));
   }
   return Response.notFound('Person not found');
 }
 
 Future<Response> deletePersonHandler(Request request) async {
-  String? personIdStr = request.params['personId'];
-  if (personIdStr != null) {
-    int? personId = int.tryParse(personIdStr);
-    if (personId != null) {
-      Person removedPerson = await personRepo.delete(personId);
+  String? personIdStr = request.params['id'];
+  
+    if (personIdStr!= null) {
+      Person removedPerson = await personRepo.delete(personIdStr);
       return Response.ok(jsonEncode(removedPerson.toJson()));
     } else {
       return Response.notFound('Person not found');
     }
-  }
-  return Response.notFound('Person not found');
 }

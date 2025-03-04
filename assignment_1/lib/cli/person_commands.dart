@@ -107,7 +107,7 @@ Future<void> _deletePerson(PersonRepository repo) async {
   if (isValid(idNr)) {
     Person? person = await repo.getById(idNr!);
     if (isValid(person)) {
-      Person? returned = await repo.delete(person!.personId);
+      Person? returned = await repo.delete(person?.id);
       print('\nPerson deleted: ${returned?.name}, ${returned?.personId}');
     } else {
       print('\nPerson with ID "$idNrInput" not found');

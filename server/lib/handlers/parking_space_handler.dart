@@ -16,7 +16,7 @@ Future<Response> createParkingSpaceHandler(Request request) async {
   Parkingspace parkingSpace = Parkingspace.fromJson(json);
   print('Parking space created: ${parkingSpace.spaceId}, ${parkingSpace.adress}');
 
-  Parkingspace? createdParkingSpace = await parkingSpaceRepo.addParkingSpace(parkingSpace);
+  Parkingspace? createdParkingSpace = await parkingSpaceRepo.add(parkingSpace);
 
   return Response.ok(jsonEncode(createdParkingSpace.toJson()));
 }
@@ -44,7 +44,7 @@ Future<Response> updateParkingSpaceHandler(Request request) async {
     final data = await request.readAsString();
     final json = jsonDecode(data);
     Parkingspace parkingSpace = Parkingspace.fromJson(json);
-    Parkingspace updatedParkingSpace = await parkingSpaceRepo.update(parkingSpace);
+    Parkingspace updatedParkingSpace = await parkingSpaceRepo.update(parkingSpace.id, parkingSpace);
     return Response.ok(jsonEncode(updatedParkingSpace.toJson()));
   }
   return Response.notFound('Parking space not found');

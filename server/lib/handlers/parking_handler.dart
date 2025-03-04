@@ -14,7 +14,7 @@ Future<Response> createParkingHandler(Request request) async {
   Parking parking = Parking.fromJson(json);
   print('Parking created: ${parking.id}, vehicle registration number: ${parking.vehicle.registrationNumber}, parking space id: ${parking.parkingSpace.id}');
 
-  Parking? createdParking = await parkingRepo.addParking(parking);
+  Parking? createdParking = await parkingRepo.add(parking);
 
   return Response.ok(jsonEncode(createdParking.toJson()));
 }
@@ -42,7 +42,7 @@ Future<Response> updateParkingHandler(Request request) async {
     final data = await request.readAsString();
     final json = jsonDecode(data);
     Parking parking = Parking.fromJson(json);
-    Parking updatedParking = await parkingRepo.update(parking);
+    Parking updatedParking = await parkingRepo.update(parking.id, parking);
     return Response.ok(jsonEncode(updatedParking.toJson()));
   }
   return Response.notFound('Parking not found');

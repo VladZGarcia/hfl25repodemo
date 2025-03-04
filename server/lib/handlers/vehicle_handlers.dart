@@ -14,7 +14,7 @@ Future<Response> createVehicleHandler(Request request) async {
   Vehicle vehicle = Vehicle.fromJson(json);
   print('Vehicle created: ${vehicle.registrationNumber}, owner name: ${vehicle.owner.name}');
 
-  Vehicle? createdVehicle = await vehicleRepo.addVehicle(vehicle);
+  Vehicle? createdVehicle = await vehicleRepo.add(vehicle);
 
   return Response.ok(jsonEncode(createdVehicle.toJson()));
 }
@@ -41,8 +41,8 @@ Future<Response> updateVehicleHandler(Request request) async {
   if (idStr != null) {
     final data = await request.readAsString();
     final json = jsonDecode(data);
-    Vehicle vehicle = Vehicle.fromJson(json);
-    Vehicle updatedVehicle = await vehicleRepo.update(vehicle);
+    var vehicle = Vehicle.fromJson(json);
+    var updatedVehicle = await vehicleRepo.update(vehicle.id, vehicle);
     return Response.ok(jsonEncode(updatedVehicle.toJson()));
   }
   return Response.notFound('Vehicle not found');

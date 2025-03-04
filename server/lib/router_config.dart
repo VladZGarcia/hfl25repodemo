@@ -15,7 +15,7 @@ class RouterConfig {
       router.get('/persons', getPersonsHandler);
       router.get('/persons/<personId>', getPersonByIdHandler);
       router.put('/persons/<id>', updatePersonHandler);
-      router.delete('/persons/<personId>', deletePersonHandler);
+      router.delete('/persons/<id>', deletePersonHandler);
 
       router.post('/vehicles', createVehicleHandler);
       router.get('/vehicles', getVehiclesHandler);

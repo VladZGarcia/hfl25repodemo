@@ -63,8 +63,8 @@ class PersonRepository {
     return Person.fromJson(json);
   }
   
-  Future<Person?> delete(int personId) async {
-    final url = Uri.parse('http://localhost:8080/persons/$personId');
+  Future<Person?> delete(String? id) async {
+    final url = Uri.parse('http://localhost:8080/persons/$id');
     Response response = await http.delete(
       url,
       headers: {

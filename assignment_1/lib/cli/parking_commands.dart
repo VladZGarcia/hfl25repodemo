@@ -88,7 +88,7 @@ Future<void> _createParking(ParkingRepository repo,
           startTime.add(Duration(hours: int.parse(parkingHourInput!)));
       String formattedEndTime = parkingSpace.formatTime(endTime);
       print(
-          '\nParking started $formattedStartTime. Ending at $formattedEndTime. Vehicle regnr: $vehicleRegnr. Price per hour: ${parkingSpace!.pricePerHour}kr/h');
+          '\nParking started $formattedStartTime. Ending at $formattedEndTime. Vehicle regnr: $vehicleRegnr. Price per hour: ${parkingSpace.pricePerHour}kr/h');
       double price = calculatePrice(
           startTime, endTime, parkingSpace.pricePerHour.toDouble());
       print(
@@ -99,7 +99,7 @@ Future<void> _createParking(ParkingRepository repo,
     } else {
       Null endTime;
       print(
-          '\nParking started $formattedStartTime. Vehicle regnr: $vehicleRegnr. Price per hour: ${parkingSpace!.pricePerHour}kr/h. \nRemember to end parking when vehicle leaves.');
+          '\nParking started $formattedStartTime. Vehicle regnr: $vehicleRegnr. Price per hour: ${parkingSpace.pricePerHour}kr/h. \nRemember to end parking when vehicle leaves.');
       var newParking =
           Parking(uuid.v4(), vehicle!, parkingSpace, startTime, endTime);
       await repo.addParking(newParking);
