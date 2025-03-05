@@ -23,6 +23,16 @@ class ParkingRepository extends FileRepository<Parking> {
   Map<String, dynamic> toJson(Parking item) {
     return item.toJson();
   }
+
+  @override
+  Future<Parking> getById(String id) async {
+    var parkings = await readFile();
+    try {
+      return parkings.firstWhere((parking) => simpleIdFromType(parking) == id);
+    } catch (e) {
+      throw Exception('Parking with ID: "$id" not found');
+    }
+  }
   
   /* List<Parking> parkings = [];
 

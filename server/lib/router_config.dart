@@ -21,17 +21,17 @@ class RouterConfig {
       router.get('/vehicles', getVehiclesHandler);
       router.get('/vehicles/<registrationNumber>', getVehicleByIdHandler);
       router.put('/vehicles/<id>', updateVehicleHandler);
-      router.delete('/vehicles/<registrationNumber>', deleteVehicleHandler);
+      router.delete('/vehicles/<id>', deleteVehicleHandler);
 
       router.post('/parking_spaces', createParkingSpaceHandler);
       router.get('/parking_spaces', getParkingSpacesHandler);
       router.get('/parking_spaces/<spaceId>', getParkingSpaceByIdHandler);
       router.put('/parking_spaces/<id>', updateParkingSpaceHandler); 
-      router.delete('/parking_spaces/<spaceId>', deleteParkingSpaceHandler);
+      router.delete('/parking_spaces/<id>', deleteParkingSpaceHandler);
 
       router.post('/parkings', createParkingHandler);
       router.get('/parkings', getParkingsHandler);
-      router.get('/parkings/<id>', getParkingByIdHandler);
+      router.get('/parkings/<registrationNumber>', getParkingByIdHandler);
       router.put('/parkings/<id>', updateParkingHandler);
       router.delete('/parkings/<id>', deleteParkingHandler);
 

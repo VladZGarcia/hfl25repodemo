@@ -13,7 +13,7 @@ class VehicleRepository extends FileRepository<Vehicle> {
   @override
   String idFromType(Vehicle item) {
     // TODO: implement idFromType
-    return item.registrationNumber;
+    return item.id;
   }
 
   @override
@@ -26,6 +26,17 @@ class VehicleRepository extends FileRepository<Vehicle> {
   Map<String, dynamic> toJson(Vehicle item) {
     // TODO: implement toJson
     return item.toJson();
+  }
+
+  @override
+  Future<Vehicle> getById(String id) async {
+    var vehicles = await readFile();
+    for (var vehicle in vehicles) {
+      if (simpleIdFromType(vehicle) == id) {
+        return vehicle;
+      }
+    }
+    throw Exception('Vehicle not found');
   }
 
   

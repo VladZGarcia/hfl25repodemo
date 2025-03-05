@@ -48,7 +48,7 @@ class VehicleRepository {
         final json = jsonDecode(response.body); // decoded json
       return Vehicle.fromJson(json);
       } else {
-        throw Exception('Failed to load vehicle with regNr: $regNr');
+        return null;
       }
     }
 
@@ -58,13 +58,14 @@ class VehicleRepository {
       url,
       headers: {
         'Content-Type': 'application/json'},
-        body: jsonEncode(vehicle.toJson()),);
+        body: jsonEncode(vehicle.toJson()),
+        );
     final json = await jsonDecode(response.body); // decoded json
     return Vehicle.fromJson(json);
   }
 
-  Future<Vehicle?> delete(String regNr) async {
-    final url = Uri.parse('http://localhost:8080/vehicles/$regNr');
+  Future<Vehicle?> delete(String id) async {
+    final url = Uri.parse('http://localhost:8080/vehicles/$id');
     Response response = await http.delete(
       url,
       headers: {

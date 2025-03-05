@@ -30,12 +30,11 @@ class PersonRepository extends FileRepository<Person> {
   @override
   Future<Person> getById(String id) async {
     var persons = await readFile();
-    for (var person in persons) {
-      if (simpleIdFromType(person) == id) {
-        return person;
-      }
+    try {
+      return persons.firstWhere((person) => simpleIdFromType(person) == id);
+    } catch (e) {
+      throw Exception('Person with ID: "$id" not found');
     }
-    throw Exception('Person not found');
   }
 
   /* @override

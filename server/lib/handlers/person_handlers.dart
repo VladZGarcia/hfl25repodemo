@@ -27,17 +27,24 @@ Future<Response> getPersonsHandler(Request request) async {
 
 Future<Response> getPersonByIdHandler(Request request) async {
   String? personId = request.params['personId'];
-  if (personId != null) {
-    int? id = int.tryParse(personId);
-    if (id != null) {
-      Person? foundPerson = await personRepo.getById(id.toString());
-      print('person found: $foundPerson');
-      return Response.ok(jsonEncode(foundPerson?.toJson()));
-    } else {
-      return Response.notFound('Person not found');
-    }
+
+  if (personId == null || personId.isEmpty) {
+    return Response.badRequest(
+        body: 'Invalid request: Person ID must be provided.');
   }
-  return Response.notFound('Person not found');
+  int? id = int.tryParse(personId);
+  if (id == null) {
+    return Response.badRequest(
+        body: 'Invalid request: Person ID must be a number.');
+  }
+
+  try {
+    Person? foundPerson = await personRepo.getById(id.toString());
+    return Response.ok(jsonEncode(foundPerson.toJson()));
+    } catch (e) {
+    return Response.internalServerError(
+        body: 'An error occurred while trying to get the person: ${e.toString()}');
+  }
 }
 
 Future<Response> updatePersonHandler(Request request) async {
@@ -53,12 +60,20 @@ Future<Response> updatePersonHandler(Request request) async {
 }
 
 Future<Response> deletePersonHandler(Request request) async {
-  String? personIdStr = request.params['id'];
-  
-    if (personIdStr!= null) {
-      Person removedPerson = await personRepo.delete(personIdStr);
+  String? idStr = request.params['id'];
+  if (idStr != null) {
+    try {
+      Person removedPerson = await personRepo.delete(idStr);
       return Response.ok(jsonEncode(removedPerson.toJson()));
-    } else {
-      return Response.notFound('Person not found');
+    } catch (e) {
+      if (e.toString() == 'Exception: Person with ID "$idStr" not found') {
+        return Response.notFound('Person with ID "$idStr" not found.');
+      }
+      return Response.internalServerError(
+          body:
+              'An error occurred while trying to delete the person: ${e.toString()}');
     }
+  } else {
+    return Response.badRequest(body: 'Invalid request: ID must be provided.');
+  }
 }

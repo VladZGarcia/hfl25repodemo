@@ -49,7 +49,7 @@ class ParkingSpaceRepository {
         final json = jsonDecode(response.body); // decoded json
       return Parkingspace.fromJson(json);
       } else {
-        throw Exception('Failed to load parking space with id: $spaceId');
+        return null;
       }
   }
 
@@ -65,8 +65,8 @@ class ParkingSpaceRepository {
     return Parkingspace.fromJson(json);
   }
 
-  Future<Parkingspace?> delete(String spaceId) async {
-    final url = Uri.parse('http://localhost:8080/parking_spaces/$spaceId');
+  Future<Parkingspace?> delete(String id) async {
+    final url = Uri.parse('http://localhost:8080/parking_spaces/$id');
     Response response = await http.delete(
       url,
       headers: {

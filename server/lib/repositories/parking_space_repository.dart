@@ -24,6 +24,16 @@ class ParkingSpaceRepository extends FileRepository<Parkingspace> {
     return item.toJson();
   }
 
+  @override
+  Future<Parkingspace> getById(String id) async {
+    var parkingspaces = await readFile();
+    try {
+      return parkingspaces.firstWhere((parkingspace) => simpleIdFromType(parkingspace) == id);
+    } catch (e) {
+      throw Exception('Parking space with ID: "$id" not found');
+    }
+  }
+
   /* List<Parkingspace> parkingSpaces = [];
 
   Future<Parkingspace> addParkingSpace(Parkingspace parkingspace) async {

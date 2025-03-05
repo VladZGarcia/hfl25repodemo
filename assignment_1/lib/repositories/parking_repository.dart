@@ -16,7 +16,7 @@ class ParkingRepository {
       'Content-Type': 'application/json',
     });
     final json = await jsonDecode(response.body);
-    print('Parking created: ${json['id']}, vehicle registration number: ${json['vehicle']['registrationNumber']}, parking space id: ${json['parkingSpace']['id']}');
+    /* print('Parking created: ${json['id']}, vehicle registration number: ${json['vehicle']['registrationNumber']}, parking space id: ${json['parkingSpace']['id']}'); */
     return Parking.fromJson(json);
   }
 
@@ -34,8 +34,8 @@ class ParkingRepository {
     }
   
   
-  Future<Parking?> getById(String id) async {
-    final url = Uri.parse('http://localhost:8080/parkings/$id');
+  Future<Parking?> getById(String regNr) async {
+    final url = Uri.parse('http://localhost:8080/parkings/$regNr');
     Response response = await http.get(
       url,
       headers: {
@@ -49,7 +49,7 @@ class ParkingRepository {
         final json = jsonDecode(response.body); // decoded json
       return Parking.fromJson(json);
       } else {
-        throw Exception('Failed to load parking with id: $id');
+        return null;
       }
   }
   
@@ -61,8 +61,7 @@ class ParkingRepository {
         'Content-Type': 'application/json'},
       body: jsonEncode(parking.toJson()),
     );
-    final json = await jsonDecode(response.body);
-    
+    final json = await jsonDecode(response.body); // decoded json
     return Parking.fromJson(json);
   }
   

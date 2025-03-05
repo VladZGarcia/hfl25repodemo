@@ -12,10 +12,10 @@ Future<Response> createVehicleHandler(Request request) async {
   final json = jsonDecode(data);
   print('\njson: $json');
   Vehicle vehicle = Vehicle.fromJson(json);
-  print('Vehicle created: ${vehicle.registrationNumber}, owner name: ${vehicle.owner.name}');
+  print(
+      'Vehicle created: ${vehicle.registrationNumber}, owner name: ${vehicle.owner.name}');
 
   Vehicle? createdVehicle = await vehicleRepo.add(vehicle);
-
   return Response.ok(jsonEncode(createdVehicle.toJson()));
 }
 
@@ -28,11 +28,16 @@ Future<Response> getVehiclesHandler(Request request) async {
 Future<Response> getVehicleByIdHandler(Request request) async {
   String? vehicleRegNr = request.params['registrationNumber'];
   if (vehicleRegNr != null) {
+    try {
       Vehicle? foundVehicle = await vehicleRepo.getById(vehicleRegNr);
-      print('Vehicle found: $foundVehicle');
-      return Response.ok(jsonEncode(foundVehicle?.toJson()));
-    } else {
-      return Response.notFound('Vehicle not found');
+    print('Vehicle found: $foundVehicle');
+    return Response.ok(jsonEncode(foundVehicle.toJson()));
+    } catch (e) {
+      return Response.internalServerError(
+          body: 'An error occurred while trying to get the vehicle: ${e.toString()}');
+  }
+  } else {
+    return Response.badRequest(body: 'Vehicle not found');
   }
 }
 
@@ -49,11 +54,20 @@ Future<Response> updateVehicleHandler(Request request) async {
 }
 
 Future<Response> deleteVehicleHandler(Request request) async {
-  String? vehicleRegNr = request.params['registrationNumber'];
-  if (vehicleRegNr != null) {
-      Vehicle removedVehicle = await vehicleRepo.delete(vehicleRegNr);
+  String? idStr = request.params['id'];
+  if (idStr != null) {
+    try {
+      Vehicle removedVehicle = await vehicleRepo.delete(idStr);
       return Response.ok(jsonEncode(removedVehicle.toJson()));
-    } else {
-      return Response.notFound('Vehicle not found');
+    } catch (e) {
+      if (e.toString() == 'Exception: Vehicle with id: $idStr not found') {
+        return Response.notFound('Vehicle with ID "$idStr" not found');
+      }
+      return Response.internalServerError(
+          body:
+              'An error occurred while tryin to delete vehicle: ${e.toString()}');
     }
+  } else {
+    return Response.badRequest(body: 'Invalid request: ID must be provided.');
+  }
 }

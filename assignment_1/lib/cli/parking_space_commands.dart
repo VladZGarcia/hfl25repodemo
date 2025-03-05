@@ -97,11 +97,11 @@ Future<void> _updateParkingSpace(ParkingSpaceRepository repo) async {
     stdout.write(
         'New price per hour (current price per hour: ${parkingSpace.pricePerHour}):');
     var newPricePerHourInput = stdin.readLineSync();
+    var newPricePerHour = int.tryParse(newPricePerHourInput!);
 
     if (isValid(newParkingSpaceId) &&
         isValid(newAdress) &&
         isValid(newPricePerHourInput)) {
-      var newPricePerHour = int.tryParse(newPricePerHourInput!);
 
       parkingSpace.spaceId = newParkingSpaceId!;
       parkingSpace.adress = newAdress!;
@@ -111,7 +111,7 @@ Future<void> _updateParkingSpace(ParkingSpaceRepository repo) async {
       print('Parking space Adress updated: ${returned.adress}');
       print('Price per hour updated: ${returned.pricePerHour}');
     } else {
-      print('\nSpace id not valid.');
+      print('\n Input not valid.');
     }
   } else {
     print('\nVehicle with space id $parkingSpaceId not found.');
@@ -124,7 +124,7 @@ Future<void> _deleteParkingSpace(ParkingSpaceRepository repo) async {
   var parkingSpace = await repo.getById(parkingSpaceId ?? '');
 
   if (isValid(parkingSpace)) {
-    repo.delete(parkingSpaceId ?? '');
+    await repo.delete(parkingSpace?.id ?? '');
     print('\nParking space with ID: ${parkingSpace!.spaceId} deleted');
   } else {
     print('\nParking space with ID: $parkingSpaceId not found');

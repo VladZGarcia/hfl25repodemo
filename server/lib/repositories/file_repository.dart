@@ -44,12 +44,12 @@ abstract class FileRepository<T> {
 
   Future<T?> getById(String id) async {
     var items = await readFile();
-    for (var item in items) {
-      if (idFromType(item) == id) {
-        return item;
-      }
+    try {
+      return items.firstWhere((item) => idFromType(item) == id);
+    } catch (e) {
+      print('Error retrieving item with ID: $id');
+      return null;
     }
-    return null;
   }
 
   Future<T> update(String id, T newItem) async {
@@ -66,13 +66,12 @@ abstract class FileRepository<T> {
 
   Future<T> delete(String id) async {
     var items = await readFile();
-    for (var i = 0; i < items.length; i++) {
-      if (idFromType(items[i]) == id) {
-        var removedItem = items.removeAt(i);
+    int index = items.indexWhere((item) => idFromType(item) == id);
+    if (index != -1) {
+        var removedItem = items.removeAt(index);
         await writeFile(items);
         return removedItem;
       }
-    }
-    throw Exception('Item not found');
+    throw Exception('Item with ID "$id" not found');
   }
 }

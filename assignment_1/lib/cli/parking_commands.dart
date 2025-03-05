@@ -87,8 +87,10 @@ Future<void> _createParking(ParkingRepository repo,
       DateTime endTime =
           startTime.add(Duration(hours: int.parse(parkingHourInput!)));
       String formattedEndTime = parkingSpace.formatTime(endTime);
-      print(
-          '\nParking started $formattedStartTime. Ending at $formattedEndTime. Vehicle regnr: $vehicleRegnr. Price per hour: ${parkingSpace.pricePerHour}kr/h');
+      print('\nParking started at: $formattedStartTime.');
+      print('Ending at $formattedEndTime.'); 
+      print('Vehicle regnr: $vehicleRegnr.'); 
+      print('Price per hour: ${parkingSpace.pricePerHour}kr/h');
       double price = calculatePrice(
           startTime, endTime, parkingSpace.pricePerHour.toDouble());
       print(
@@ -98,8 +100,10 @@ Future<void> _createParking(ParkingRepository repo,
       await repo.addParking(newParking);
     } else {
       Null endTime;
-      print(
-          '\nParking started $formattedStartTime. Vehicle regnr: $vehicleRegnr. Price per hour: ${parkingSpace.pricePerHour}kr/h. \nRemember to end parking when vehicle leaves.');
+      print('\nParking started at $formattedStartTime.');
+      print('Vehicle regnr: $vehicleRegnr.'); 
+      print('Price per hour: ${parkingSpace.pricePerHour}kr/h.');
+      print('\nRemember to end parking when vehicle leaves.');
       var newParking =
           Parking(uuid.v4(), vehicle!, parkingSpace, startTime, endTime);
       await repo.addParking(newParking);
@@ -141,9 +145,9 @@ Future<void> _showAllParkings(ParkingRepository repo) async {
 }
 
 Future<void> _updateParking(ParkingRepository repo) async{
-  stdout.write('\nInput ID for parking to update: ');
-  var parkingId = stdin.readLineSync();
-  var parking = await repo.getById(parkingId ?? '');
+  stdout.write('\nInput RegNr for car in parking to update: ');
+  var parkingCarRegNr = stdin.readLineSync();
+  var parking = await repo.getById(parkingCarRegNr ?? '');
 
   if (isValid(parking)) {
     stdout.write('New end time (current end time: ${parking?.endTime}):');
@@ -151,24 +155,24 @@ Future<void> _updateParking(ParkingRepository repo) async{
     if (isValid(newEndTime)) {
       parking?.endTime = DateTime.parse(newEndTime!);
       await repo.update(parking!);
-      print('\nParking with ID:${parking.id} updated');
+      print('\nParking with car RegNr:${parking.vehicle.registrationNumber} updated');
     } else {
       print('\nInvalid input, try again.');
     }
   } else {
-    print('\nParking with ID:$parkingId not found');
+    print('\nParking with car RegNr:$parkingCarRegNr not found');
   }
 }
 
 Future<void> _deleteParking(ParkingRepository repo) async {
-  stdout.write('\nInput ID for parking to delete: ');
-  var parkingId = stdin.readLineSync();
-  var parking = await repo.getById(parkingId ?? '');
+  stdout.write('\nInput RegNr for car in parking to delete: ');
+  var parkingCarRegNr = stdin.readLineSync();
+  var parking = await repo.getById(parkingCarRegNr ?? '');
 
   if (isValid(parking)) {
-    await repo.delete(parkingId ?? '');
-    print('\nParking with ID:${parking?.id} deleted');
+    await repo.delete(parking?.id ?? '');
+    print('\nParking with ID:${parking?.id} and car RegNr: ${parking?.vehicle.registrationNumber} deleted');
   } else {
-    print('\nParking with ID:$parkingId not found');
+    print('\nParking with car RegNr: $parkingCarRegNr not found');
   }
 }

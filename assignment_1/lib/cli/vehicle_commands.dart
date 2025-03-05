@@ -111,7 +111,7 @@ Future<void> _deleteVehicle(VehicleRepository repo) async {
   var vehicle = await repo.getById(regNr ?? '');
 
   if (isValid(vehicle)) {
-    repo.delete(regNr ?? '');
+    await repo.delete(vehicle?.id ?? '');
     print('\nVehicle with RegNr ${vehicle!.registrationNumber} deleted!');
   } else {
     print('\nVehicle with RegNr $regNr not found');
