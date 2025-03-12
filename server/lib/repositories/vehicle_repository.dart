@@ -1,35 +1,32 @@
+import 'package:server/models/vehicle_entity.dart';
 import 'package:server/repositories/file_repository.dart';
 import 'package:shared/shared.dart';
 
-class VehicleRepository extends FileRepository<Vehicle> {
+class VehicleRepository extends FileRepository<VehicleEntity> {
   VehicleRepository() : super('vehicles.json');
 
   @override
-  Vehicle fromJson(Map<String, dynamic> json) {
-    // TODO: implement fromJson
-    return Vehicle.fromJson(json);
+  VehicleEntity fromJson(Map<String, dynamic> json) {
+    return VehicleEntity.fromJson(json);
   }
 
   @override
-  String idFromType(Vehicle item) {
-    // TODO: implement idFromType
+  String idFromType(VehicleEntity item) {
     return item.id;
   }
 
   @override
-  String simpleIdFromType(Vehicle item) {
-    // TODO: implement personIdFromType
+  String simpleIdFromType(VehicleEntity item) {
     return item.registrationNumber;
   }
 
   @override
-  Map<String, dynamic> toJson(Vehicle item) {
-    // TODO: implement toJson
+  Map<String, dynamic> toJson(VehicleEntity item) {
     return item.toJson();
   }
 
   @override
-  Future<Vehicle> getById(String id) async {
+  Future<VehicleEntity> getById(String id) async {
     var vehicles = await readFile();
     for (var vehicle in vehicles) {
       if (simpleIdFromType(vehicle) == id) {

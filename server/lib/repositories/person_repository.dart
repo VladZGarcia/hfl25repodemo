@@ -6,25 +6,21 @@ class PersonRepository extends FileRepository<Person> {
 
   @override
   Person fromJson(Map<String, dynamic> json) {
-    // TODO: implement fromJson
     return Person.fromJson(json);
   }
 
   @override
-  String idFromType(Person person) {
-    // TODO: implement idFromType
-    return person.id;
+  String idFromType(Person item) {
+    return item.id;
   }
   @override
-  String simpleIdFromType(Person person) {
-    // TODO: implement idFromType
-    return person.personId.toString();
+  String simpleIdFromType(Person item) {
+    return item.personId.toString();
   }
 
   @override
-  Map<String, dynamic> toJson(Person person) {
-    // TODO: implement toJson
-    return person.toJson();
+  Map<String, dynamic> toJson(Person item) {
+    return item.toJson();
   }
 
   @override

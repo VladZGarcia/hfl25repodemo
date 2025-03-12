@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:assignment_1/utils/data_initialisation.dart';
 
 import '../repositories/parking_space_repository.dart';
 import '../repositories/person_repository.dart';
@@ -35,7 +34,7 @@ Future<void> runCLI() async{
         await handlePersons(personRepo);
         break;
       case '2':
-        await handleVehicles(vehicleRepo);
+        await handleVehicles(vehicleRepo, personRepo);
         break;
       case '3':
         await handleParking(parkingRepo, parkingSpaceRepo, vehicleRepo);

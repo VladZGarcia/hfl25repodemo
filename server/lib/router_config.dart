@@ -1,4 +1,4 @@
-
+/* import '../bin/server.dart'; */
 import 'package:server/handlers/parking_handler.dart';
 import 'package:server/handlers/parking_space_handler.dart';
 import 'package:server/handlers/person_handlers.dart';
@@ -9,8 +9,8 @@ class RouterConfig {
   static Router initialize() {
     final router = Router();
     
-      // ..get('/', _rootHandler)
-      // ..get('/echo/<message>', _echoHandler)
+      /* router.get('/', _rootHandler);
+      router.get('/echo/<message>', _echoHandler); */
       router.post('/persons', createPersonHandler);
       router.get('/persons', getPersonsHandler);
       router.get('/persons/<personId>', getPersonByIdHandler);
