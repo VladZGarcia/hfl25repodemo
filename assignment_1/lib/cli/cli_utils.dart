@@ -31,8 +31,8 @@ extension FindStuff<T> on List<T> {
   }
 }
 
-String formatDateTime(DateTime dateTime) {
-  return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+String formatDateTime(DateTime? dateTime) {
+  return DateFormat('yyyy-MM-dd HH:mm').format(dateTime!);
 }
 
 double calculatePrice(DateTime startTime, DateTime endTime, double pricePerHour) {

@@ -1,6 +1,5 @@
 import 'dart:io';
-
-import 'package:assignment_1/utils/data_initialisation.dart';
+//import 'package:assignment_1/utils/data_initialisation.dart';
 
 import '../repositories/parking_space_repository.dart';
 import '../repositories/person_repository.dart';
