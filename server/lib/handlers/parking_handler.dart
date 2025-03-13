@@ -36,9 +36,9 @@ Future<Response> getParkingByIdHandler(Request request) async {
   if (parkingId != null) {
     try {
       var parkingEntity = await parkingRepo.getById(parkingId);
-      var parking = await parkingEntity?.toModel();
+      var parking = await parkingEntity.toModel();
       print('Parking found: $parking');
-      return Response.ok(jsonEncode(parking?.toJson()));
+      return Response.ok(jsonEncode(parking.toJson()));
     } catch (e) {
       return Response.internalServerError(
           body:

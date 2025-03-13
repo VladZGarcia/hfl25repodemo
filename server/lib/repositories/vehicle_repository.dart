@@ -1,6 +1,5 @@
 import 'package:server/models/vehicle_entity.dart';
 import 'package:server/repositories/file_repository.dart';
-import 'package:shared/shared.dart';
 
 class VehicleRepository extends FileRepository<VehicleEntity> {
   VehicleRepository() : super('vehicles.json');

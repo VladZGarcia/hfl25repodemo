@@ -1,6 +1,5 @@
 import 'package:server/models/parking_entity.dart';
 import 'package:server/repositories/file_repository.dart';
-import 'package:shared/shared.dart';
 
 class ParkingRepository extends FileRepository<ParkingEntity> {
   ParkingRepository() : super('parkings.json');

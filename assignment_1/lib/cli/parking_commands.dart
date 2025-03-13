@@ -79,8 +79,9 @@ Future<void> _createParking(
   }
   stdout.write('Choose a vehicle regnr to start parking: ');
   var vehicleRegnr = stdin.readLineSync();
-  var vehicle = vehicles.cast<Vehicle?>()
-      .firstWhere((vehicle) => vehicle?.registrationNumber == vehicleRegnr, orElse: () => null);
+  var vehicle = vehicles.cast<Vehicle?>().firstWhere(
+      (vehicle) => vehicle?.registrationNumber == vehicleRegnr,
+      orElse: () => null);
 
   /* var vehicleId = vehicleExist.id;
   var vehicle = await vehicleRepo.getById(vehicleId); */
@@ -160,13 +161,22 @@ Future<void> _updateParking(
   stdout.write('\nInput RegNr for car in parking to update: ');
   var parkingCarRegNr = stdin.readLineSync();
   var vehicles = await vehicleRepo.getAll();
-  var vehicle = vehicles
-      .firstWhere((vehicle) => vehicle.registrationNumber == parkingCarRegNr);
-  var parking = await repo.getById(vehicle.id);
+  var vehicle = vehicles.cast<Vehicle?>().firstWhere(
+      (vehicle) => vehicle?.registrationNumber == parkingCarRegNr,
+      orElse: () => null);
 
-  if (isValid(parking)) {
-    stdout.write('New end time (current end time: ${parking?.endTime}):');
+  if (isValid(vehicle)) {
+    var parking = await repo.getById(vehicle!.id);
+    //var formatedEndTime = formatDateTime(parking!.endTime);
+    if (isValid(parking?.endTime)) {
+      stdout.write(
+          'New end time (current end time: ${formatDateTime(parking?.endTime)}):');
+      
+    } else {
+      stdout.write('New end time (current end time: ongoing)${formatDateTime(DateTime.now())}:');
+    }
     var newEndTime = stdin.readLineSync();
+
     if (isValid(newEndTime)) {
       parking?.endTime = DateTime.parse(newEndTime!);
       await repo.update(parking!);
@@ -185,8 +195,9 @@ Future<void> _deleteParking(
   stdout.write('\nInput RegNr for car in parking to delete: ');
   var parkingCarRegNr = stdin.readLineSync();
   var vehicles = await vehicleRepo.getAll();
-  var vehicle = vehicles.cast<Vehicle?>()
-      .firstWhere((vehicle) => vehicle?.registrationNumber == parkingCarRegNr, orElse:() => null);
+  var vehicle = vehicles.cast<Vehicle?>().firstWhere(
+      (vehicle) => vehicle?.registrationNumber == parkingCarRegNr,
+      orElse: () => null);
   if (isValid(vehicle)) {
     var parking = await repo.getById(vehicle!.id);
 
