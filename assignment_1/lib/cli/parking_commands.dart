@@ -8,8 +8,10 @@ import 'cli_utils.dart';
 
 final uuid = Uuid();
 
-Future<void> handleParking(ParkingRepository repo,
-    ParkingSpaceRepository parkingSpaceRepo, VehicleRepository vehicleRepo) async {
+Future<void> handleParking(
+    ParkingRepository repo,
+    ParkingSpaceRepository parkingSpaceRepo,
+    VehicleRepository vehicleRepo) async {
   while (true) {
     print('\nParking handling. How can I help you?');
     print('1. Create parking.');
@@ -31,11 +33,11 @@ Future<void> handleParking(ParkingRepository repo,
         break;
       case '3':
         print('Updating parking');
-        await _updateParking(repo);
+        await _updateParking(repo, vehicleRepo);
         break;
       case '4':
         print('Deleting parking');
-        await _deleteParking(repo);
+        await _deleteParking(repo, vehicleRepo);
         break;
       case '5':
         return;
@@ -45,8 +47,10 @@ Future<void> handleParking(ParkingRepository repo,
   }
 }
 
-Future<void> _createParking(ParkingRepository repo,
-    ParkingSpaceRepository parkingSpaceRepo, VehicleRepository vehicleRepo) async {
+Future<void> _createParking(
+    ParkingRepository repo,
+    ParkingSpaceRepository parkingSpaceRepo,
+    VehicleRepository vehicleRepo) async {
   var parkingSpaces = await parkingSpaceRepo.getAll();
   if (isValid(parkingSpaces)) {
     print('\nList of parking spaces:');
@@ -58,6 +62,7 @@ Future<void> _createParking(ParkingRepository repo,
   } else {
     print(
         '\nNo parking spaces found! You need to create a parking space first.');
+    return;
   }
   stdout.write('Choose a parking space ID to start parking: ');
   var parkingSpaceId = stdin.readLineSync();
@@ -70,10 +75,16 @@ Future<void> _createParking(ParkingRepository repo,
     }
   } else {
     print('\nNo vehicles found! You need to create a vehicle first.');
+    return;
   }
   stdout.write('Choose a vehicle regnr to start parking: ');
   var vehicleRegnr = stdin.readLineSync();
-  var vehicle = await vehicleRepo.getById(vehicleRegnr ?? '');
+  var vehicle = vehicles.cast<Vehicle?>()
+      .firstWhere((vehicle) => vehicle?.registrationNumber == vehicleRegnr, orElse: () => null);
+
+  /* var vehicleId = vehicleExist.id;
+  var vehicle = await vehicleRepo.getById(vehicleId); */
+
   if (isValid(parkingSpace) && isValid(vehicle)) {
     DateTime startTime = DateTime.now();
     //String formattedStartTime = formatDateTime(startTime);
@@ -82,14 +93,14 @@ Future<void> _createParking(ParkingRepository repo,
         'Enter parking time in hours or just enter for ongoing parking: ');
     var parkingHourInput = stdin.readLineSync();
     var parkingHour = int.tryParse(parkingHourInput ?? '');
-    
+
     if (isValid(parkingHour)) {
       DateTime endTime =
           startTime.add(Duration(hours: int.parse(parkingHourInput!)));
       String formattedEndTime = parkingSpace.formatTime(endTime);
       print('\nParking started at: $formattedStartTime.');
-      print('Ending at $formattedEndTime.'); 
-      print('Vehicle regnr: $vehicleRegnr.'); 
+      print('Ending at $formattedEndTime.');
+      print('Vehicle regnr: $vehicleRegnr.');
       print('Price per hour: ${parkingSpace.pricePerHour}kr/h');
       double price = calculatePrice(
           startTime, endTime, parkingSpace.pricePerHour.toDouble());
@@ -101,7 +112,7 @@ Future<void> _createParking(ParkingRepository repo,
     } else {
       Null endTime;
       print('\nParking started at $formattedStartTime.');
-      print('Vehicle regnr: $vehicleRegnr.'); 
+      print('Vehicle regnr: $vehicleRegnr.');
       print('Price per hour: ${parkingSpace.pricePerHour}kr/h.');
       print('\nRemember to end parking when vehicle leaves.');
       var newParking =
@@ -114,7 +125,7 @@ Future<void> _createParking(ParkingRepository repo,
 }
 
 Future<void> _showAllParkings(ParkingRepository repo) async {
-  var  parkings = await repo.getAll();
+  var parkings = await repo.getAll();
   if (isValid(parkings)) {
     print('\nList of started parking:');
     for (var parking in parkings) {
@@ -135,7 +146,7 @@ Future<void> _showAllParkings(ParkingRepository repo) async {
         print('Ongoing parking! ');
         double price = calculatePrice(parking.startTime, DateTime.now(),
             parking.parkingSpace.pricePerHour.toDouble());
-            print(
+        print(
             'Cost for parking  is: $price kr. \nRemember to end parking when vehicle leaves.');
       }
     }
@@ -144,10 +155,14 @@ Future<void> _showAllParkings(ParkingRepository repo) async {
   }
 }
 
-Future<void> _updateParking(ParkingRepository repo) async{
+Future<void> _updateParking(
+    ParkingRepository repo, VehicleRepository vehicleRepo) async {
   stdout.write('\nInput RegNr for car in parking to update: ');
   var parkingCarRegNr = stdin.readLineSync();
-  var parking = await repo.getById(parkingCarRegNr ?? '');
+  var vehicles = await vehicleRepo.getAll();
+  var vehicle = vehicles
+      .firstWhere((vehicle) => vehicle.registrationNumber == parkingCarRegNr);
+  var parking = await repo.getById(vehicle.id);
 
   if (isValid(parking)) {
     stdout.write('New end time (current end time: ${parking?.endTime}):');
@@ -155,7 +170,8 @@ Future<void> _updateParking(ParkingRepository repo) async{
     if (isValid(newEndTime)) {
       parking?.endTime = DateTime.parse(newEndTime!);
       await repo.update(parking!);
-      print('\nParking with car RegNr:${parking.vehicle.registrationNumber} updated');
+      print(
+          '\nParking with car RegNr:${parking.vehicle.registrationNumber} updated');
     } else {
       print('\nInvalid input, try again.');
     }
@@ -164,14 +180,23 @@ Future<void> _updateParking(ParkingRepository repo) async{
   }
 }
 
-Future<void> _deleteParking(ParkingRepository repo) async {
+Future<void> _deleteParking(
+    ParkingRepository repo, VehicleRepository vehicleRepo) async {
   stdout.write('\nInput RegNr for car in parking to delete: ');
   var parkingCarRegNr = stdin.readLineSync();
-  var parking = await repo.getById(parkingCarRegNr ?? '');
+  var vehicles = await vehicleRepo.getAll();
+  var vehicle = vehicles.cast<Vehicle?>()
+      .firstWhere((vehicle) => vehicle?.registrationNumber == parkingCarRegNr, orElse:() => null);
+  if (isValid(vehicle)) {
+    var parking = await repo.getById(vehicle!.id);
 
-  if (isValid(parking)) {
-    await repo.delete(parking?.id ?? '');
-    print('\nParking with ID:${parking?.id} and car RegNr: ${parking?.vehicle.registrationNumber} deleted');
+    if (isValid(parking)) {
+      await repo.delete(parking?.id ?? '');
+      print(
+          '\nParking with ID:${parking?.id} and car RegNr: ${parking?.vehicle.registrationNumber} deleted');
+    } else {
+      print('\nParking with car RegNr: $parkingCarRegNr not found');
+    }
   } else {
     print('\nParking with car RegNr: $parkingCarRegNr not found');
   }

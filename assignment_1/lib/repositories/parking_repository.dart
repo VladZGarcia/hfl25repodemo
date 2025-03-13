@@ -34,8 +34,8 @@ class ParkingRepository {
     }
   
   
-  Future<Parking?> getById(String regNr) async {
-    final url = Uri.parse('http://localhost:8080/parkings/$regNr');
+  Future<Parking?> getById(String vehicleId) async {
+    final url = Uri.parse('http://localhost:8080/parkings/$vehicleId');
     Response response = await http.get(
       url,
       headers: {

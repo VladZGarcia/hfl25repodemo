@@ -1,31 +1,32 @@
+import 'package:server/models/parking_entity.dart';
 import 'package:server/repositories/file_repository.dart';
 import 'package:shared/shared.dart';
 
-class ParkingRepository extends FileRepository<Parking> {
+class ParkingRepository extends FileRepository<ParkingEntity> {
   ParkingRepository() : super('parkings.json');
 
   @override
-  Parking fromJson(Map<String, dynamic> json) {
-    return Parking.fromJson(json);
+  ParkingEntity fromJson(Map<String, dynamic> json) {
+    return ParkingEntity.fromJson(json);
   }
 
   @override
-  String idFromType(Parking item) {
+  String idFromType(ParkingEntity item) {
     return item.id;
   }
 
   @override
-  String simpleIdFromType(Parking item) {
-    return item.vehicle.registrationNumber;
+  String simpleIdFromType(ParkingEntity item) {
+    return item.vehicleId;
   }
 
   @override
-  Map<String, dynamic> toJson(Parking item) {
+  Map<String, dynamic> toJson(ParkingEntity item) {
     return item.toJson();
   }
 
   @override
-  Future<Parking> getById(String id) async {
+  Future<ParkingEntity> getById(String id) async {
     var parkings = await readFile();
     try {
       return parkings.firstWhere((parking) => simpleIdFromType(parking) == id);
