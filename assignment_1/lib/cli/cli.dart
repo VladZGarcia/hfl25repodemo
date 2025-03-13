@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:assignment_1/utils/data_initialisation.dart';
 
 import '../repositories/parking_space_repository.dart';
 import '../repositories/person_repository.dart';
@@ -10,14 +9,14 @@ import 'person_commands.dart';
 import 'vehicle_commands.dart';
 import 'parking_space_commands.dart';
 
-void runCLI() {
+Future<void> runCLI() async{
   var personRepo = PersonRepository();
   var vehicleRepo = VehicleRepository();
   var parkingRepo = ParkingRepository();
   var parkingSpaceRepo = ParkingSpaceRepository();
 
   // Initialize data
-  initializeData(personRepo, vehicleRepo, parkingSpaceRepo);
+   //await initializeData(personRepo, vehicleRepo, parkingSpaceRepo);
 
   while (true) {
     print('\nWellcome to the Parking App!');
@@ -32,16 +31,16 @@ void runCLI() {
 
     switch (choice) {
       case '1':
-        handlePersons(personRepo);
+        await handlePersons(personRepo);
         break;
       case '2':
-        handleVehicles(vehicleRepo);
+        await handleVehicles(vehicleRepo, personRepo);
         break;
       case '3':
-        handleParking(parkingRepo, parkingSpaceRepo, vehicleRepo);
+        await handleParking(parkingRepo, parkingSpaceRepo, vehicleRepo);
         break;
       case '4':
-        handleParkingSpace(parkingSpaceRepo);
+        await handleParkingSpace(parkingSpaceRepo);
         break;
       case '5':
         exit(0);
