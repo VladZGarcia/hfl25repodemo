@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:server/models/parking_entity.dart';
 import 'package:server/repositories/parking_repository.dart';
 import 'package:shared/shared.dart';
 import 'package:shelf/shelf.dart';
@@ -15,24 +16,29 @@ Future<Response> createParkingHandler(Request request) async {
   print(
       'Parking created: ${parking.id}, vehicle registration number: ${parking.vehicle.registrationNumber}, parking space id: ${parking.parkingSpace.id}');
 
-  Parking? createdParking = await parkingRepo.add(parking);
+  var parkingEntity = await parkingRepo.add(parking.toEntity());
+  Parking? createdParking = await parkingEntity.toModel();
 
   return Response.ok(jsonEncode(createdParking.toJson()));
 }
 
 Future<Response> getParkingsHandler(Request request) async {
-  List<Parking> parkings = await parkingRepo.getAll();
-  List<dynamic> parkingList = parkings.map((e) => e.toJson()).toList();
-  return Response.ok(jsonEncode(parkingList));
+  final parkingEntities = await parkingRepo.getAll();
+  List<dynamic> parkingList = await Future.wait(parkingEntities.map((e) => e.toModel()));
+  final payload = parkingList.map((e) => e.toJson()).toList();
+  return Response.ok(jsonEncode(payload),
+      headers: {'content-type': 'application/json'}
+      );
 }
 
 Future<Response> getParkingByIdHandler(Request request) async {
-  String? parkingId = request.params['registrationNumber'];
+  String? parkingId = request.params['vehicleId'];
   if (parkingId != null) {
     try {
-      Parking? foundParking = await parkingRepo.getById(parkingId);
-      print('Parking found: $foundParking');
-      return Response.ok(jsonEncode(foundParking.toJson()));
+      var parkingEntity = await parkingRepo.getById(parkingId);
+      var parking = await parkingEntity?.toModel();
+      print('Parking found: $parking');
+      return Response.ok(jsonEncode(parking?.toJson()));
     } catch (e) {
       return Response.internalServerError(
           body:
@@ -48,8 +54,12 @@ Future<Response> updateParkingHandler(Request request) async {
   if (idStr != null) {
     final data = await request.readAsString();
     final json = jsonDecode(data);
-    Parking parking = Parking.fromJson(json);
-    Parking updatedParking = await parkingRepo.update(parking.id, parking);
+    var parking = Parking.fromJson(json);
+
+    var parkingEntity = parking.toEntity();
+    var updatedParkingEntity = await parkingRepo.update(parking.id, parkingEntity);
+    var updatedParking = await updatedParkingEntity.toModel();
+
     return Response.ok(jsonEncode(updatedParking.toJson()));
   }
   return Response.notFound('Parking not found');
@@ -59,7 +69,9 @@ Future<Response> deleteParkingHandler(Request request) async {
   String? parkingId = request.params['id'];
   if (parkingId != null) {
     try {
-      Parking removedParking = await parkingRepo.delete(parkingId);
+      var removedParkingEntity = await parkingRepo.delete(parkingId);
+      var removedParking = await removedParkingEntity.toModel();
+      
     return Response.ok(jsonEncode(removedParking.toJson()));
     } catch (e) {
       if (e.toString() == 'Exception: Parking with id: $parkingId not found') {

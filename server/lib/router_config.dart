@@ -31,7 +31,7 @@ class RouterConfig {
 
       router.post('/parkings', createParkingHandler);
       router.get('/parkings', getParkingsHandler);
-      router.get('/parkings/<registrationNumber>', getParkingByIdHandler);
+      router.get('/parkings/<vehicleId>', getParkingByIdHandler);
       router.put('/parkings/<id>', updateParkingHandler);
       router.delete('/parkings/<id>', deleteParkingHandler);
 

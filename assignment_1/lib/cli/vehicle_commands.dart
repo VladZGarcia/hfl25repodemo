@@ -29,7 +29,7 @@ Future<void> handleVehicles(
         break;
       case '3':
         print('Updating vehicle');
-        await _updateVehicle(repo);
+        await _updateVehicle(repo, personRepo);
         break;
       case '4':
         print('Deleting vehicle');
@@ -99,7 +99,7 @@ Future<void> _showAllVehicle(VehicleRepository repo) async {
   }
 }
 
-Future<void> _updateVehicle(VehicleRepository repo) async {
+Future<void> _updateVehicle(VehicleRepository repo, PersonRepository personRepo) async {
   stdout.write('\nInput vehicle RegNr to update: ');
   var regNr = stdin.readLineSync();
   var vehicle = await repo.getById(regNr ?? '');
@@ -114,13 +114,16 @@ Future<void> _updateVehicle(VehicleRepository repo) async {
     int? newId = int.tryParse(newIdInput!);
 
     if (isValid(newRegNr) && isValid(newName) && isValid(newId)) {
+      var ownerId = vehicle.owner.personId;
+      Person? person = await personRepo.getById(ownerId);
       vehicle.registrationNumber = newRegNr!;
-      vehicle.owner.name = newName!;
-      vehicle.owner.personId = newId!;
+      person?.name = newName!;
+      person?.personId = newId!;
+      Person personReturned = await personRepo.update(person!);
       Vehicle returned = await repo.update(vehicle);
       print('\nVehicle updated: ${returned.registrationNumber}');
-      print('Owner name updated: ${returned.owner.name}');
-      print('Owner ID updated: ${returned.owner.personId}');
+      print('Owner name updated: ${personReturned.name}');
+      print('Owner ID updated: ${personReturned.personId}');
     } else {
       print('\nRegNr not valid.');
     }
