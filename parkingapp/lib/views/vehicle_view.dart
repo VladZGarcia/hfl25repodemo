@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:parkingapp/repositories/parking_space_repository.dart';
+import 'package:parkingapp/repositories/vehicle_repository.dart';
 
-class ParkingView extends StatelessWidget {
-  const ParkingView({super.key});
+class VehicleView extends StatelessWidget {
+  const VehicleView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: ParkingSpaceRepository().getAll(),
+      future: VehicleRepository().getAll(),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return SingleChildScrollView(
@@ -17,34 +17,33 @@ class ParkingView extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
-                    'Avaible Parkings',
+                    'Vehicles',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 ListView(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-              children:
-                  snapshot.data!.map((parkingSpace) {
-                    return Column(
-                      children: [
-                        ListTile(
-                      title: Text(parkingSpace.adress),
-                      subtitle: Text(parkingSpace.spaceId),
-                      leading: const Icon(Icons.local_parking),
-                    ),
-                    
-                        const Divider(),
-                      ],
-                    );
-                  }).toList(),
-                )
-              ]
+                  children:
+                      snapshot.data!.map((vehicle) {
+                        return Column(
+                          children: [
+                            ListTile(
+                              title: Text(vehicle.registrationNumber),
+                              subtitle: Text(vehicle.owner.name),
+                              leading: const Icon(Icons.directions_car),
+                            ),
+                            const Divider(),
+                          ],
+                        );
+                      }).toList(),
+                ),
+              ],
             ),
           );
         } else if (snapshot.hasError) {
           return Center(
-            child: Text('Error loading parkings: ${snapshot.error}'),
+            child: Text('Error loading vehicles: ${snapshot.error}'),
           );
         } else {
           return const Center(child: CircularProgressIndicator());

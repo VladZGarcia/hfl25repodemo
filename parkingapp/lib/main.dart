@@ -3,6 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:parkingapp/views/account_view.dart';
 import 'package:parkingapp/views/parking_view.dart';
+import 'package:parkingapp/views/ticket_view.dart';
+import 'package:parkingapp/views/vehicle_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void main() {
@@ -33,8 +35,17 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ValueNotifier<int> _index = ValueNotifier<int>(0);
-    final views = [const ParkingView(), const AccountView()];
+    final ValueNotifier<int> _index = ValueNotifier<int>(3);
+    final views = [
+      const ParkingView(),
+      const TicketView(),
+      const VehicleView(),
+      const AccountView(),
+    ];
+
+    final _initialChildSizes = [0.1, 0.1, 0.1, 1.0]; // Example sizes
+
+    final _maxChildSizes = [0.6, 0.6, 0.6, 1.0];
 
     return ValueListenableBuilder<int>(
       valueListenable: _index,
@@ -71,9 +82,11 @@ class MyHomePage extends StatelessWidget {
               ),
               DraggableScrollableSheet(
                 // Use DraggableScrollableSheet
-                initialChildSize: 0.1, // Initial height (adjust as needed)
-                minChildSize: 0.1, // Minimum height
-                maxChildSize: 0.7, // Maximum height
+                initialChildSize:
+                    _initialChildSizes[value], // Initial height based on current view
+                minChildSize: _initialChildSizes[value], // Minimum height
+                maxChildSize:
+                    _maxChildSizes[value], // Maximum height based on current view
                 builder: (context, scrollController) {
                   return Container(
                     decoration: const BoxDecoration(
@@ -97,16 +110,33 @@ class MyHomePage extends StatelessWidget {
           ),
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: value,
+            selectedItemColor: Colors.black,
+            unselectedItemColor: Colors.grey,
             onTap: (newIndex) {
               _index.value = newIndex;
             },
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.car_repair),
+                icon: Icon(
+                  Icons.search,
+                  color: Colors.black,
+                  semanticLabel: 'Hitta',
+                ),
                 label: 'Parking',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.account_box_outlined),
+                icon: Icon(Icons.ad_units_sharp, color: Colors.black),
+                label: 'Tickets',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.directions_car_filled_outlined,
+                  color: Colors.black,
+                ),
+                label: 'Vehicles',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.account_box_outlined, color: Colors.black),
                 label: 'Account',
               ),
             ],
