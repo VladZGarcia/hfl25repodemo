@@ -60,7 +60,7 @@ Future<void> _createVehicle(
       print('Press y to create new owner or any other key to return');
       var createOwner = stdin.readLineSync();
       if (createOwner == 'y') {
-        var person = Person(uuid.v4(), ownerName!, ownerId);
+        var person = Person(id:uuid.v4(), name:ownerName!, personId:ownerId);
         Person? personReturned = await personRepo.addPerson(person);
         print(
             '\nPerson created: ${personReturned.name}, ${personReturned.personId}');
@@ -115,7 +115,7 @@ Future<void> _updateVehicle(VehicleRepository repo, PersonRepository personRepo)
 
     if (isValid(newRegNr) && isValid(newName) && isValid(newId)) {
       var ownerId = vehicle.owner.personId;
-      Person? person = await personRepo.getById(ownerId);
+      Person? person = await personRepo.getById(ownerId!);
       vehicle.registrationNumber = newRegNr!;
       person?.name = newName!;
       person?.personId = newId!;
