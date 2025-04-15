@@ -15,7 +15,13 @@ class ParkingView extends StatefulWidget {
 class _ParkingViewState extends State<ParkingView> {
   int _selectedIndex = -1;
   String? _selectedVehicleId;
-  String? _selectedParkingSpaceId;
+  late Vehicle _selectedVehicle;
+  late Parkingspace _selectedParkingSpace;
+  String? _selectedParkingSpaceAddress;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+  double? _cost;
+  final Uuid uuid = const Uuid();
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +52,10 @@ class _ParkingViewState extends State<ParkingView> {
                       onTap: () {
                         setState(() {
                           _selectedIndex = index;
+                          _selectedParkingSpace = parkingSpace;
+                          _selectedParkingSpaceAddress = parkingSpace.adress;
+                          _startTime =
+                              TimeOfDay.now(); // Set start time to current time
                           _handleParking(context);
                         });
                       },
@@ -72,10 +82,8 @@ class _ParkingViewState extends State<ParkingView> {
           );
         } else if (snapshot.hasError) {
           return Center(
-            child: Text('Error loading parkingspaces: ${snapshot.error}'),
+            child: Text('Error loading parking spaces: ${snapshot.error}'),
           );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No parkingsspaces available.'));
         } else {
           return const Center(child: CircularProgressIndicator());
         }
@@ -86,63 +94,161 @@ class _ParkingViewState extends State<ParkingView> {
   Future<void> _handleParking(BuildContext context) {
     return showDialog(
       context: context,
-
+      barrierDismissible: false,
       builder: (context) {
-        final uuid = Uuid();
-
-        return AlertDialog(
-          title: const Text('Add Parking'),
-
-          content: FutureBuilder(
-            future: VehicleRepository().getAll(),
-
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error loading vehicles: ${snapshot.error}'),
-                );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No vehicles available.'));
-              } else {
-                return DropdownButton<String>(
-                  value: _selectedVehicleId,
-
-                  hint: const Text('Select a vehicle'),
-
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedVehicleId = newValue;
-                    });
-                  },
-
-                  items:
-                      snapshot.data!.map<DropdownMenuItem<String>>((vehicle) {
-                        return DropdownMenuItem<String>(
-                          value: vehicle.id,
-
-                          child: Text(vehicle.registrationNumber),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Add Parking'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FutureBuilder(
+                    future: VehicleRepository().getAll(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(
+                          child: Text(
+                            'Error loading vehicles: ${snapshot.error}',
+                          ),
                         );
-                      }).toList(),
-                );
-              }
-            },
-          ),
-
-          actions: [
-            TextButton(
-              onPressed: () {
-                // Handle the add action here
-
-                Navigator.of(context).pop();
-              },
-
-              child: const Text('Add'),
-            ),
-          ],
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Text('No vehicles available.'),
+                        );
+                      } else {
+                        return DropdownButton<String>(
+                          value: _selectedVehicleId,
+                          hint: const Text('Select a vehicle'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _selectedVehicleId = newValue;
+                              _selectedVehicle = snapshot.data!.firstWhere(
+                                (vehicle) => vehicle.id == newValue,
+                              );
+                            });
+                          },
+                          items:
+                              snapshot.data!.map<DropdownMenuItem<String>>((
+                                vehicle,
+                              ) {
+                                return DropdownMenuItem<String>(
+                                  value: vehicle.id,
+                                  child: Text(vehicle.registrationNumber),
+                                );
+                              }).toList(),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () async {
+                      final TimeOfDay? pickedEndTime = await showTimePicker(
+                        context: context,
+                        initialEntryMode: TimePickerEntryMode.input,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (pickedEndTime != null) {
+                        setState(() {
+                          _endTime = pickedEndTime;
+                          var price = _selectedParkingSpace.pricePerHour;
+                          _calculateCost(price);
+                        });
+                      }
+                    },
+                    child: Text(
+                      _endTime == null
+                          ? 'Select End Time'
+                          : 'End Time: ${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_selectedParkingSpaceAddress != null)
+                    Text('Parking Space: $_selectedParkingSpaceAddress'),
+                  if (_selectedVehicleId != null)
+                    Text('Vehicle: ${_selectedVehicle.registrationNumber}'),
+                  if (_startTime != null) Text('Start Time: $_startTime'),
+                  Text(
+                    'Cost per hour: \$${_selectedParkingSpace.pricePerHour.toStringAsFixed(2)}',
+                  ),
+                    Text(
+                      _endTime != null
+                          ? 'End Time: ${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                          : 'End Time: Ongoing',
+                    ),
+                  if (_cost != null)
+                    Text('Cost: \$${_cost!.toStringAsFixed(2)}'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed:
+                      (_selectedVehicleId != null && _startTime != null)
+                          ? () async {
+                            var newParking = Parking(
+                              uuid.v4(),
+                              _selectedVehicle,
+                              _selectedParkingSpace,
+                              _convertTimeOfDayToDateTime(_startTime!),
+                              _endTime != null
+                                  ? _convertTimeOfDayToDateTime(_endTime!)
+                                  : null,
+                            );
+                            await (ParkingRepository().addParking(newParking));
+                            // Close the dialog and clear selections
+                            _clearSelections();
+                            Navigator.of(context).pop();
+                          }
+                          : null,
+                  child: const Text('Add'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Close the dialog and clear selections
+                    _clearSelections();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
+  }
+
+  DateTime _convertTimeOfDayToDateTime(TimeOfDay timeOfDay) {
+    final now = DateTime.now();
+    return DateTime(
+      now.year,
+      now.month,
+      now.day,
+      timeOfDay.hour,
+      timeOfDay.minute,
+    );
+  }
+
+  void _clearSelections() {
+    setState(() {
+      _selectedVehicleId = null;
+      _selectedParkingSpaceAddress = null;
+      _startTime = null;
+      _endTime = null;
+      _cost = null;
+    });
+  }
+
+  void _calculateCost(price) {
+    if (_startTime != null && _endTime != null) {
+      final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
+      final endMinutes = _endTime!.hour * 60 + _endTime!.minute;
+      final durationMinutes = endMinutes - startMinutes;
+      var costPerMinute = (price / 60); // Example cost per minute
+      _cost = (durationMinutes * costPerMinute).toDouble();
+    }
   }
 }
