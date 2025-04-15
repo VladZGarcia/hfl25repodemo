@@ -50,7 +50,7 @@ Future<void> _createPerson(PersonRepository repo) async {
   int? personId = int.tryParse(idNrInput!);
 
   if (name != null && personId != null) {
-    var person = Person(uuid.v4(), name, personId);
+    var person = Person(id:uuid.v4(), name:name, personId:personId);
     Person? returned = await repo.addPerson(person);
     print('\nPerson created: ${returned.name}, ${returned.personId}');
   } else {

@@ -12,9 +12,9 @@ Future<void> initializeData(
   ParkingSpaceRepository parkingSpaceRepo,
 ) async{
   // Add default Persons
-  var person1 = Person(uuid.v4(),'Alice', 1234567890);
-  var person2 = Person(uuid.v4(),'Bob', 2345678901);
-  var person3 = Person(uuid.v4(),'Charlie', 3456789012);
+  var person1 = Person(id: uuid.v4(),name:'Alice', personId: 1234567890);
+  var person2 = Person(id: uuid.v4(),name:'Bob', personId:2345678901);
+  var person3 = Person(id: uuid.v4(), name:'Charlie', personId:3456789012);
   await personRepo.addPerson(person1);
   await personRepo.addPerson(person2);
   await personRepo.addPerson(person3);
