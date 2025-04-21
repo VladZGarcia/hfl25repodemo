@@ -16,7 +16,7 @@ class ParkingSpaceRepository {
       'Content-Type': 'application/json',
     });
     final json = await jsonDecode(response.body);
-    print('Parking space created: ${json['spaceId']}, ${json['adress']}');
+    
     return Parkingspace.fromJson(json);
     }
   

@@ -1,5 +1,4 @@
 import 'package:intl/intl.dart';
-
 import '../models/vehicle.dart';
 import 'parking_space.dart';
 

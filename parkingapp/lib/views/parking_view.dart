@@ -4,6 +4,7 @@ import 'package:parkingapp/repositories/parking_space_repository.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
 import 'package:shared/shared.dart';
 import 'package:uuid/uuid.dart';
+import 'package:parkingapp/utils/parking_utils.dart';
 
 class ParkingView extends StatefulWidget {
   const ParkingView({super.key});
@@ -13,6 +14,7 @@ class ParkingView extends StatefulWidget {
 }
 
 class _ParkingViewState extends State<ParkingView> {
+  Future future = ParkingSpaceRepository().getAll();
   int _selectedIndex = -1;
   String? _selectedVehicleId;
   late Vehicle _selectedVehicle;
@@ -22,11 +24,12 @@ class _ParkingViewState extends State<ParkingView> {
   TimeOfDay? _endTime;
   double? _cost;
   final Uuid uuid = const Uuid();
+  
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: ParkingSpaceRepository().getAll(),
+      future: future,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return Column(
@@ -148,7 +151,7 @@ class _ParkingViewState extends State<ParkingView> {
                     onPressed: () async {
                       final TimeOfDay? pickedEndTime = await showTimePicker(
                         context: context,
-                        initialEntryMode: TimePickerEntryMode.input,
+                        initialEntryMode: TimePickerEntryMode.dial,
                         initialTime: TimeOfDay.now(),
                       );
                       if (pickedEndTime != null) {
@@ -161,7 +164,7 @@ class _ParkingViewState extends State<ParkingView> {
                     },
                     child: Text(
                       _endTime == null
-                          ? 'Select End Time'
+                          ? 'Ongoing parking or Select End Time'
                           : 'End Time: ${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}',
                     ),
                   ),
@@ -170,15 +173,18 @@ class _ParkingViewState extends State<ParkingView> {
                     Text('Parking Space: $_selectedParkingSpaceAddress'),
                   if (_selectedVehicleId != null)
                     Text('Vehicle: ${_selectedVehicle.registrationNumber}'),
-                  if (_startTime != null) Text('Start Time: $_startTime'),
+                  if (_startTime != null)
+                    Text(
+                      'Start Time: ${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}',
+                    ),
                   Text(
                     'Cost per hour: \$${_selectedParkingSpace.pricePerHour.toStringAsFixed(2)}',
                   ),
-                    Text(
-                      _endTime != null
-                          ? 'End Time: ${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
-                          : 'End Time: Ongoing',
-                    ),
+                  Text(
+                    _endTime != null
+                        ? 'End Time: ${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                        : 'End Time: Ongoing',
+                  ),
                   if (_cost != null)
                     Text('Cost: \$${_cost!.toStringAsFixed(2)}'),
                 ],
@@ -192,10 +198,8 @@ class _ParkingViewState extends State<ParkingView> {
                               uuid.v4(),
                               _selectedVehicle,
                               _selectedParkingSpace,
-                              _convertTimeOfDayToDateTime(_startTime!),
-                              _endTime != null
-                                  ? _convertTimeOfDayToDateTime(_endTime!)
-                                  : null,
+                              _startTime!.toDateTime(),
+                              _endTime?.toDateTime(),
                             );
                             await (ParkingRepository().addParking(newParking));
                             // Close the dialog and clear selections
@@ -218,17 +222,6 @@ class _ParkingViewState extends State<ParkingView> {
           },
         );
       },
-    );
-  }
-
-  DateTime _convertTimeOfDayToDateTime(TimeOfDay timeOfDay) {
-    final now = DateTime.now();
-    return DateTime(
-      now.year,
-      now.month,
-      now.day,
-      timeOfDay.hour,
-      timeOfDay.minute,
     );
   }
 
