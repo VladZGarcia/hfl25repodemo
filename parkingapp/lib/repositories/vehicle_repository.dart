@@ -16,7 +16,6 @@ class VehicleRepository {
       'Content-Type': 'application/json',
     });
     final json = await jsonDecode(response.body);
-    print('Vehicle created: ${json['registrationNumber']}, ${json['owner']['name']}');
     return Vehicle.fromJson(json);
     }
     

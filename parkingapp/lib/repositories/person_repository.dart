@@ -15,7 +15,6 @@ class PersonRepository {
       'Content-Type': 'application/json',
     });
     final json = await jsonDecode(response.body);
-    print('Person created: ${json['name']}, ${json['personId']}');
     return Person.fromJson(json);
   }
 
@@ -30,7 +29,6 @@ class PersonRepository {
     final json = await jsonDecode(response.body); // decoded json list
     final List<Person> persons =
         (json as List<dynamic>).map((e) => Person.fromJson(e)).toList();
-    print(' Persons retrieved: $persons');
     return persons;
   }
 
