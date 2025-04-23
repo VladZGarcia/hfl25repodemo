@@ -1,26 +1,23 @@
 class Person {
   final String id;
   String name;
-  // String address;
   String? email;
-  // String phone;
+  String? password;
   int? personId;
 
   Person(
     {required this.id, 
-    required this.name, 
-    // this.address, 
-    this.email, 
-    // this.phone, 
+    required this.name,
+    this.email,
+    this.password,
     this.personId});
 
   factory Person.fromJson(Map<String, dynamic> json) {
     return Person(
       id: json['id'],
       name: json['name'],
-      // address: json['address'],
       email: json['email'],
-      // phone: json['phone'],
+      password: json['password'],
       personId: json['personId'],
     );
   }
@@ -29,9 +26,8 @@ class Person {
     return {
       'id': id,
       'name': name,
-      // 'address': address,
       'email': email,
-      // 'phone': phone,
+      'password': password,
       'personId': personId,
     };
   }

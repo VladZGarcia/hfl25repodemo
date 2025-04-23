@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:parkingapp/repositories/person_repository.dart';
+import 'package:shared/shared.dart';
+import 'package:uuid/uuid.dart';
 
 class SignupView extends StatelessWidget {
-  const SignupView({super.key});
+  final VoidCallback onSignup;
+
+  SignupView({super.key, required this.onSignup});
+
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +51,7 @@ class SignupView extends StatelessWidget {
                   filled: true,
                   prefixIcon: const Icon(Icons.person),
                 ),
+                controller: _usernameController,
               ),
               const SizedBox(height: 20),
               TextField(
@@ -53,6 +65,7 @@ class SignupView extends StatelessWidget {
                   filled: true,
                   prefixIcon: const Icon(Icons.email),
                 ),
+                controller: _emailController,
               ),
               const SizedBox(height: 20),
               TextField(
@@ -66,6 +79,7 @@ class SignupView extends StatelessWidget {
                   filled: true,
                   prefixIcon: const Icon(Icons.password),
                 ),
+                controller: _passwordController,
                 obscureText: true,
               ),
               const SizedBox(height: 20),
@@ -80,16 +94,37 @@ class SignupView extends StatelessWidget {
                   filled: true,
                   prefixIcon: const Icon(Icons.password),
                 ),
+                controller: _confirmPasswordController,
                 obscureText: true,
               ),
             ],
           ),
           Container(
             padding: const EdgeInsets.only(top: 3, left: 3),
-
+    
             child: ElevatedButton(
               onPressed: () {
-                // Handle login action
+                if (_usernameController.text.isEmpty ||
+                    _emailController.text.isEmpty ||
+                    _passwordController.text.isEmpty ||
+                    _confirmPasswordController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Please fill all fields"),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                } else {
+                  _handleSignup(
+                    context,
+                    _usernameController.text,
+                    _emailController.text,
+                    _passwordController.text,
+                    _confirmPasswordController.text,
+                    onSignup,
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 shape: const StadiumBorder(
@@ -105,7 +140,7 @@ class SignupView extends StatelessWidget {
             ),
           ),
           const Center(child: Text("Or")),
-
+    
           Container(
             height: 45,
             decoration: BoxDecoration(
@@ -115,6 +150,12 @@ class SignupView extends StatelessWidget {
             ),
             child: TextButton(
               onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Google login not implemented yet"),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
                 // Handle login action
               },
               child: Row(
@@ -148,6 +189,8 @@ class SignupView extends StatelessWidget {
               const Text("Already have an account?"),
               TextButton(
                 onPressed: () {
+                  onSignup();
+                  
                   // Handle login action
                 },
                 child: const Text(
@@ -162,6 +205,65 @@ class SignupView extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+void _handleSignup(
+  BuildContext context,
+  String usernameInput,
+  String emailInput,
+  String passwordInput,
+  String confirmPasswordInput,
+  VoidCallback onSignup,
+) async {
+  final String username = usernameInput;
+  final String email = emailInput;
+  final String password = passwordInput;
+  final String confirmPassword = confirmPasswordInput;
+
+  if (password != confirmPassword) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Passwords do not match"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    return;
+  }
+  try {
+    PersonRepository personRepository = PersonRepository();
+    var uuid = Uuid();
+
+    // Check if the email already exists
+    final List<Person> persons = await personRepository.getAll();
+    final bool emailExists = persons.any((person) => person.email == email);
+    if (emailExists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Email already exists"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    await personRepository.addPerson(
+      Person(id: uuid.v4(), name: username, email: email, password: password),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Account created successfully"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    onSignup();
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Error creating account"),
+        duration: Duration(seconds: 2),
       ),
     );
   }
