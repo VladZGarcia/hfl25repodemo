@@ -1,10 +1,11 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
 import 'package:parkingapp/views/account_view.dart';
 import 'package:parkingapp/views/parking_view.dart';
+import 'package:parkingapp/views/settings_view.dart';
 import 'package:parkingapp/views/signup_view.dart';
 import 'package:parkingapp/views/ticket_view.dart';
 import 'package:parkingapp/views/vehicle_view.dart';
@@ -13,27 +14,67 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+  final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, ThemeMode currentMode, child) {
+        SystemChrome.setSystemUIOverlayStyle(
+          themeNotifier.value == ThemeMode.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
+        );
+        return MaterialApp(
+          color: Color.fromARGB(255, 230, 216, 216),
+          debugShowCheckedModeBanner: false,
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            colorScheme: ColorScheme.light(
+              primary: Colors.purple,
+              surface: const Color(0xFFE6D8D8),
+              onSurface: Colors.grey[900]!,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFFE6D8D8),
+              foregroundColor: Colors.black, // Text color for AppBar
+            ),
+            scaffoldBackgroundColor: const Color(0xFFE6D8D8),
+          ),
+          darkTheme: ThemeData(
+    colorScheme: ColorScheme.dark(
+      primary: Colors.blue,
+      surface: Colors.grey[900]!,
+      onSurface: Colors.white,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.grey[900],
+      foregroundColor: Colors.white,
+    ),
+    scaffoldBackgroundColor: Colors.black,
+  ),
+          themeMode: currentMode,
+          home: MyHomePage(themeNotifier: themeNotifier, title: 'Parking App'),
+        );
+      },
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  final ValueNotifier<ThemeMode> themeNotifier;
+
+  const MyHomePage({
+    super.key,
+    required this.title,
+    required this.themeNotifier,
+  });
 
   final String title;
 
@@ -42,25 +83,48 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _currentIndex = 1;
-  double _currentChildSize= 0.3;
-  bool _isExpanded = false;
+  int _currentIndex = 3;
+  late double _currentChildSize;
+  bool _isExpanded = true;
+  bool _isLoggedIn = false;
+  bool _isSignedIn = false;
+  late List<Widget> views;
 
-  final List<Widget> views = [
-    const ParkingView(),
-    const TicketView(),
-    const VehicleView(),
-    const SignupView(),
-  ];
-  final List<double> _minChildSizes = [0.1, 1.0, 1.0, 1.0];
-  final List<double> _initialChildSizes = [0.3, 1.0, 1.0, 1.0];
-  final List<double> _maxChildSizes = [0.5, 1.0, 1.0, 1.0];
+  void _toggleLoginState() {
+    setState(() {
+      _isLoggedIn = !_isLoggedIn;
+    });
+  }
+
+  void _toggleSignupState() {
+    setState(() {
+      _isSignedIn = !_isSignedIn;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _currentChildSize = _initialChildSizes[_currentIndex];
+    views = [
+      const ParkingView(),
+      const TicketView(),
+      const VehicleView(),
+      AccountView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
+    ];
+  }
+
+  final List<double> _minChildSizes = [0.1, 0.1, 0.1, 1.0];
+  final List<double> _initialChildSizes = [0.4, 0.4, 0.5, 1.0];
+  final List<double> _maxChildSizes = [0.5, 0.5, 0.6, 1.0];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 230, 216, 216),
       body: SizedBox(
         height: MediaQuery.of(context).size.height - kBottomNavigationBarHeight,
+        width: double.infinity,
         child: Stack(
           children: [
             FlutterMap(
@@ -77,13 +141,19 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  tileBuilder:
+                      widget.themeNotifier.value == ThemeMode.dark
+                          ? darkModeTileBuilder
+                          : null,
                   userAgentPackageName: 'com.example.app',
                 ),
                 RichAttributionWidget(
                   attributions: [
                     TextSourceAttribution(
                       '© OpenStreetMap contributors',
-                      textStyle: const TextStyle(color: Colors.black),
+                      textStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       onTap:
                           () => launchUrl(
                             Uri.parse(
@@ -96,40 +166,58 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
             DraggableScrollableSheet(
-                key: UniqueKey(),
-                initialChildSize: _currentChildSize,
-                minChildSize: _minChildSizes[_currentIndex],
-                maxChildSize: _maxChildSizes[_currentIndex],
-                builder: (context, scrollController) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _currentChildSize = _isExpanded
-                            ? _minChildSizes[_currentIndex]
-                            : _maxChildSizes[_currentIndex];
-                        _isExpanded = !_isExpanded;
-                      });
-                    },
-                    child: Container(
-                      alignment: Alignment.bottomLeft,
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(255, 230, 216, 216),
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(16),
-                        ),
-                      ),
-                      child: SingleChildScrollView(
-                        controller: scrollController,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: views[_currentIndex],
-                        ),
+              key: UniqueKey(),
+              initialChildSize: _currentChildSize,
+              minChildSize: _minChildSizes[_currentIndex],
+              maxChildSize: _maxChildSizes[_currentIndex],
+              builder: (context, scrollController) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _currentChildSize =
+                          _isExpanded
+                              ? _minChildSizes[_currentIndex]
+                              : _maxChildSizes[_currentIndex];
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.vertical(
+                        top:
+                            _currentIndex == 3
+                                ? const Radius.circular(0)
+                                : const Radius.circular(16),
                       ),
                     ),
-                  );
-                },
-              ),
-            
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child:
+                            _currentIndex == 3
+                                ? (_isLoggedIn
+                                    ? SettingsPage(
+                                      themeNotifier: widget.themeNotifier,
+                                      onLogout: _toggleLoginState,
+                                    )
+                                    : (_isSignedIn
+                                        ? AccountView(
+                                          onLogin: _toggleLoginState,
+                                          onSignup: _toggleSignupState,
+                                        )
+                                        : SignupView(
+                                          onSignup: _toggleSignupState,
+                                        )))
+                                : views[_currentIndex],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -193,36 +281,49 @@ class _MyHomePageState extends State<MyHomePage> {
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurface,
+        unselectedLabelStyle: const TextStyle(color: Colors.black),
+        selectedLabelStyle: const TextStyle(color: Colors.black),
+        showUnselectedLabels: false,
+        showSelectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+
         onTap: (newIndex) {
           setState(() {
             _currentIndex = newIndex;
             _currentChildSize = _initialChildSizes[newIndex];
           });
         },
-        items: const [
+        items: [
           BottomNavigationBarItem(
             icon: Icon(
               Icons.search,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
               semanticLabel: 'Hitta',
             ),
             label: 'Parking',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.ad_units_sharp, color: Colors.black),
+            icon: Icon(
+              Icons.ad_units_sharp,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             label: 'Tickets',
           ),
           BottomNavigationBarItem(
             icon: Icon(
               Icons.directions_car_filled_outlined,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             label: 'Vehicles',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_box_outlined, color: Colors.black),
+            icon: Icon(
+              Icons.account_box_outlined,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             label: 'Account',
           ),
         ],
