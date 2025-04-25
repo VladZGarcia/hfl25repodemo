@@ -1,30 +1,36 @@
 import 'dart:convert';
-
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:shared/shared.dart';
 import 'package:http/http.dart' as http;
 
 class PersonRepository {
+  String get baseUrl {
+    if (kIsWeb) return 'http://localhost:8080';
+    if (Platform.isAndroid || Platform.isIOS) return 'http://10.0.2.2:8080';
+    return 'http://localhost:8080';
+  }
+
   List<Person> persons = [];
 
   Future<Person> addPerson(Person person) async {
-    final url = Uri.parse('http://10.0.2.2:8080/persons');
+    final url = Uri.parse('$baseUrl/persons');
 
-    Response response =
-        await http.post(url, body: jsonEncode(person.toJson()), headers: {
-      'Content-Type': 'application/json',
-    });
+    Response response = await http.post(
+      url,
+      body: jsonEncode(person.toJson()),
+      headers: {'Content-Type': 'application/json'},
+    );
     final json = await jsonDecode(response.body);
     return Person.fromJson(json);
   }
 
   Future<List<Person>> getAll() async {
-    final url = Uri.parse('http://10.0.2.2:8080/persons');
+    final url = Uri.parse('$baseUrl/persons');
     Response response = await http.get(
       url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
     );
     final json = await jsonDecode(response.body); // decoded json list
     final List<Person> persons =
@@ -33,13 +39,11 @@ class PersonRepository {
   }
 
   Future<Person?> getById(int personId) async {
-    final url = Uri.parse('http://10.0.2.2:8080/persons/$personId');
+    final url = Uri.parse('$baseUrl/persons/$personId');
     try {
       Response response = await http.get(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
@@ -50,7 +54,8 @@ class PersonRepository {
         return Person.fromJson(json);
       } else {
         throw Exception(
-            'Failed to load person with id: $personId. StatusCode: ${response.statusCode}');
+          'Failed to load person with id: $personId. StatusCode: ${response.statusCode}',
+        );
       }
     } catch (e) {
       return null;
@@ -58,7 +63,7 @@ class PersonRepository {
   }
 
   Future<Person> update(Person person) async {
-    final url = Uri.parse('http://10.0.2.2:8080/persons/${person.id}');
+    final url = Uri.parse('$baseUrl/persons/${person.id}');
     Response response = await http.put(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -69,12 +74,10 @@ class PersonRepository {
   }
 
   Future<Person?> delete(String? id) async {
-    final url = Uri.parse('http://10.0.2.2:8080/persons/$id');
+    final url = Uri.parse('$baseUrl/persons/$id');
     Response response = await http.delete(
       url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
       if (response.body.trim() == 'null') {

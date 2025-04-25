@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parkingapp/main.dart';
 import 'package:parkingapp/repositories/person_repository.dart';
-import 'package:parkingapp/views/settings_view.dart';
-import 'package:parkingapp/views/signup_view.dart';
 import 'package:shared/shared.dart';
 
 class AccountView extends StatelessWidget {
@@ -19,8 +16,14 @@ class AccountView extends StatelessWidget {
     return SingleChildScrollView(
       child: Container(
         margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height - 50,
+        ),
+        width: double.infinity,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _header(context),
             _inputField(
@@ -39,13 +42,18 @@ class AccountView extends StatelessWidget {
 }
 
 _header(context) {
-  return const Column(
+  return Column(
     children: [
-      Text(
+      const SizedBox(height: 60.0),
+      const Text(
         "Login",
         style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
       ),
-      Text("Enter you credentials to login"),
+      const SizedBox(height: 20),
+      Text(
+        "Enter you credentials to login",
+        style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+      ),
     ],
   );
 }
@@ -72,7 +80,7 @@ _inputField(
         ),
         controller: _emailController,
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: 20),
       TextField(
         decoration: InputDecoration(
           hintText: "password",
@@ -87,7 +95,7 @@ _inputField(
         controller: _passwordController,
         obscureText: true,
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: 50),
       ElevatedButton(
         onPressed: () {
           if (_emailController.text.isEmpty ||

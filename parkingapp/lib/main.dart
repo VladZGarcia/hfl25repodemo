@@ -12,8 +12,26 @@ import 'package:parkingapp/views/vehicle_view.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart';
+import 'package:window_size/window_size.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
+import 'layouts/desktop_layout.dart';
+import 'widgets/responsive_layout.dart';
+import 'dart:io';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (kIsWeb) {
+    // Set minimum window size for web
+    setWindowMinSize(const Size(850, 900));
+    setWindowMaxSize(Size.infinite);
+  } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    // Set minimum window size for desktop
+    setWindowMinSize(const Size(850, 600));
+    setWindowMaxSize(Size.infinite);
+  }
+
   runApp(MyApp());
 }
 
@@ -48,17 +66,17 @@ class MyApp extends StatelessWidget {
             scaffoldBackgroundColor: const Color(0xFFE6D8D8),
           ),
           darkTheme: ThemeData(
-    colorScheme: ColorScheme.dark(
-      primary: Colors.blue,
-      surface: Colors.grey[900]!,
-      onSurface: Colors.white,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.grey[900],
-      foregroundColor: Colors.white,
-    ),
-    scaffoldBackgroundColor: Colors.black,
-  ),
+            colorScheme: ColorScheme.dark(
+              primary: Colors.blue,
+              surface: Colors.grey[900]!,
+              onSurface: Colors.white,
+            ),
+            appBarTheme: AppBarTheme(
+              backgroundColor: Colors.grey[900],
+              foregroundColor: Colors.white,
+            ),
+            scaffoldBackgroundColor: Colors.black,
+          ),
           themeMode: currentMode,
           home: MyHomePage(themeNotifier: themeNotifier, title: 'Parking App'),
         );
@@ -120,51 +138,65 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color.fromARGB(255, 230, 216, 216),
-      body: SizedBox(
-        height: MediaQuery.of(context).size.height - kBottomNavigationBarHeight,
-        width: double.infinity,
-        child: Stack(
-          children: [
-            FlutterMap(
-              options: MapOptions(
-                onTap: (_, __) {
-                  setState(() {
-                    _currentChildSize = _minChildSizes[_currentIndex];
-                    _isExpanded = false;
-                  });
-                },
-                initialCenter: LatLng(59.207, 17.901),
-                initialZoom: 16.0,
+    final mapWidget = FlutterMap(
+      options: MapOptions(
+        onTap: (_, __) {
+          setState(() {
+            _currentChildSize = _minChildSizes[_currentIndex];
+            _isExpanded = false;
+          });
+        },
+        initialCenter: LatLng(59.207, 17.901),
+        initialZoom: 16.0,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          tileProvider: CancellableNetworkTileProvider(),
+          tileBuilder:
+              widget.themeNotifier.value == ThemeMode.dark
+                  ? darkModeTileBuilder
+                  : null,
+          userAgentPackageName: 'com.example.app',
+        ),
+        RichAttributionWidget(
+          attributions: [
+            TextSourceAttribution(
+              '© OpenStreetMap contributors',
+              textStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  tileBuilder:
-                      widget.themeNotifier.value == ThemeMode.dark
-                          ? darkModeTileBuilder
-                          : null,
-                  userAgentPackageName: 'com.example.app',
-                ),
-                RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution(
-                      '© OpenStreetMap contributors',
-                      textStyle: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                      onTap:
-                          () => launchUrl(
-                            Uri.parse(
-                              'https://www.openstreetmap.org/copyright',
-                            ),
-                          ),
-                    ),
-                  ],
-                ),
-              ],
+              onTap:
+                  () => launchUrl(
+                    Uri.parse('https://www.openstreetmap.org/copyright'),
+                  ),
             ),
+          ],
+        ),
+      ],
+    );
+
+    final contentWidget =
+        _currentIndex == 3
+            ? (_isLoggedIn
+                ? SettingsPage(
+                  themeNotifier: widget.themeNotifier,
+                  onLogout: _toggleLoginState,
+                )
+                : (_isSignedIn
+                    ? AccountView(
+                      onLogin: _toggleLoginState,
+                      onSignup: _toggleSignupState,
+                    )
+                    : SignupView(onSignup: _toggleSignupState)))
+            : views[_currentIndex];
+
+    return ResponsiveLayout(
+      mobile: Scaffold(
+        backgroundColor: Color.fromARGB(255, 230, 216, 216),
+        body: Stack(
+          children: [
+            mapWidget,
             DraggableScrollableSheet(
               key: UniqueKey(),
               initialChildSize: _currentChildSize,
@@ -196,22 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       controller: scrollController,
                       child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child:
-                            _currentIndex == 3
-                                ? (_isLoggedIn
-                                    ? SettingsPage(
-                                      themeNotifier: widget.themeNotifier,
-                                      onLogout: _toggleLoginState,
-                                    )
-                                    : (_isSignedIn
-                                        ? AccountView(
-                                          onLogin: _toggleLoginState,
-                                          onSignup: _toggleSignupState,
-                                        )
-                                        : SignupView(
-                                          onSignup: _toggleSignupState,
-                                        )))
-                                : views[_currentIndex],
+                        child: contentWidget,
                       ),
                     ),
                   ),
@@ -220,113 +237,123 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-      ),
-      floatingActionButton:
-          _currentIndex == 2
-              ? FloatingActionButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      final uuid = Uuid();
+        floatingActionButton:
+            _currentIndex == 2
+                ? FloatingActionButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        final uuid = Uuid();
 
-                      String registrationNumber = '';
-                      String loggedInUserId =
-                          "9f7efa38-d2e4-478d-8283-6e2b08896269";
-                      String ownerName = 'loggedInUser.name';
-                      int ownerPersonId = 0123456789;
+                        String registrationNumber = '';
+                        String loggedInUserId =
+                            "9f7efa38-d2e4-478d-8283-6e2b08896269";
+                        String ownerName = 'loggedInUser.name';
+                        int ownerPersonId = 0123456789;
 
-                      return AlertDialog(
-                        title: const Text('Add Vehicle'),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Registration Number',
+                        return AlertDialog(
+                          title: const Text('Add Vehicle'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Registration Number',
+                                ),
+                                onChanged: (value) {
+                                  registrationNumber = value;
+                                },
                               ),
-                              onChanged: (value) {
-                                registrationNumber = value;
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () async {
+                                await VehicleRepository().addVehicle(
+                                  Vehicle(
+                                    uuid.v4(),
+                                    registrationNumber,
+                                    Person(
+                                      id: loggedInUserId,
+                                      name: ownerName,
+                                      personId: ownerPersonId,
+                                    ),
+                                  ),
+                                );
+                                // Optionally, you can refresh the list of vehicles here
+                                Navigator.of(context).pop();
                               },
+                              child: const Text('Add'),
                             ),
                           ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () async {
-                              await VehicleRepository().addVehicle(
-                                Vehicle(
-                                  uuid.v4(),
-                                  registrationNumber,
-                                  Person(
-                                    id: loggedInUserId,
-                                    name: ownerName,
-                                    personId: ownerPersonId,
-                                  ),
-                                ),
-                              );
-                              // Optionally, you can refresh the list of vehicles here
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Add'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                child: const Icon(Icons.add),
-              )
-              : null,
-
-      bottomNavigationBar: BottomNavigationBar(
+                        );
+                      },
+                    );
+                  },
+                  child: const Icon(Icons.add),
+                )
+                : null,
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          unselectedItemColor: Theme.of(context).colorScheme.onSurface,
+          unselectedLabelStyle: const TextStyle(color: Colors.black),
+          selectedLabelStyle: const TextStyle(color: Colors.black),
+          showUnselectedLabels: false,
+          showSelectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          onTap: (newIndex) {
+            setState(() {
+              _currentIndex = newIndex;
+              _currentChildSize = _initialChildSizes[newIndex];
+            });
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.search,
+                color: Theme.of(context).colorScheme.onSurface,
+                semanticLabel: 'Hitta',
+              ),
+              label: 'Parking',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.ad_units_sharp,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              label: 'Tickets',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.directions_car_filled_outlined,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              label: 'Vehicles',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.account_box_outlined,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              label: 'Account',
+            ),
+          ],
+        ),
+      ),
+      desktop: DesktopLayout(
+        map: mapWidget,
+        content: contentWidget,
+        themeNotifier: widget.themeNotifier,
         currentIndex: _currentIndex,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-        unselectedItemColor: Theme.of(context).colorScheme.onSurface,
-        unselectedLabelStyle: const TextStyle(color: Colors.black),
-        selectedLabelStyle: const TextStyle(color: Colors.black),
-        showUnselectedLabels: false,
-        showSelectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-
-        onTap: (newIndex) {
+        onIndexChanged: (index) {
           setState(() {
-            _currentIndex = newIndex;
-            _currentChildSize = _initialChildSizes[newIndex];
+            _currentIndex = index;
+            _currentChildSize = _initialChildSizes[index];
           });
         },
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.search,
-              color: Theme.of(context).colorScheme.onSurface,
-              semanticLabel: 'Hitta',
-            ),
-            label: 'Parking',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.ad_units_sharp,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            label: 'Tickets',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.directions_car_filled_outlined,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            label: 'Vehicles',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.account_box_outlined,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            label: 'Account',
-          ),
-        ],
       ),
     );
   }

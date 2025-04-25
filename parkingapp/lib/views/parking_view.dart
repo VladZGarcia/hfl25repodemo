@@ -24,7 +24,6 @@ class _ParkingViewState extends State<ParkingView> {
   TimeOfDay? _endTime;
   double? _cost;
   final Uuid uuid = const Uuid();
-  
 
   @override
   Widget build(BuildContext context) {
@@ -32,56 +31,60 @@ class _ParkingViewState extends State<ParkingView> {
       future: future,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Available Parkings',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'Available Parkings',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-              ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  final parkingSpace = snapshot.data![index];
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex = index;
-                          _selectedParkingSpace = parkingSpace;
-                          _selectedParkingSpaceAddress = parkingSpace.adress;
-                          _startTime =
-                              TimeOfDay.now(); // Set start time to current time
-                          _handleParking(context);
-                        });
-                      },
-                      child: Column(
-                        key: ValueKey(parkingSpace.id),
-                        children: [
-                          ListTile(
-                            title: Text(parkingSpace.adress),
-                            subtitle: Text(parkingSpace.spaceId),
-                            leading: Icon(
-                              Icons.local_parking,
-                              color:
-                                  _selectedIndex == index ? Colors.blue : null,
+                ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    final parkingSpace = snapshot.data![index];
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedIndex = index;
+                            _selectedParkingSpace = parkingSpace;
+                            _selectedParkingSpaceAddress = parkingSpace.adress;
+                            _startTime =
+                                TimeOfDay.now(); // Set start time to current time
+                            _handleParking(context);
+                          });
+                        },
+                        child: Column(
+                          key: ValueKey(parkingSpace.id),
+                          children: [
+                            ListTile(
+                              title: Text(parkingSpace.adress),
+                              subtitle: Text(parkingSpace.spaceId),
+                              leading: Icon(
+                                Icons.local_parking,
+                                color:
+                                    _selectedIndex == index
+                                        ? Colors.blue
+                                        : null,
+                              ),
                             ),
-                          ),
-                          const Divider(),
-                        ],
+                            const Divider(),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ],
+                    );
+                  },
+                ),
+              ],
+            ),
           );
         } else if (snapshot.hasError) {
           return Center(
