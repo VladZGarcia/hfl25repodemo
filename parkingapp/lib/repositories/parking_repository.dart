@@ -1,14 +1,21 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:shared/shared.dart';
 import 'package:http/http.dart' as http;
 
 class ParkingRepository {
+  String get baseUrl {
+    if (kIsWeb) return 'http://localhost:8080';
+    if (Platform.isAndroid || Platform.isIOS) return 'http://10.0.2.2:8080';
+    return 'http://localhost:8080';
+  }
   List<Parking> parkings = [];
 
   Future<Parking> addParking(Parking parking) async {
-    final url = Uri.parse('http://10.0.2.2:8080/parkings');
+    final url = Uri.parse('$baseUrl/parkings');
 
     Response response = await http.post(url,
         body: jsonEncode(parking.toJson()), 
@@ -21,7 +28,7 @@ class ParkingRepository {
   }
 
   Future<List<Parking>> getAll() async {
-    final url = Uri.parse('http://10.0.2.2:8080/parkings');
+    final url = Uri.parse('$baseUrl/parkings');
     Response response = await http.get(
       url,
       headers: {
@@ -35,7 +42,7 @@ class ParkingRepository {
   
   
   Future<Parking?> getById(String vehicleId) async {
-    final url = Uri.parse('http://10.0.2.2:8080/parkings/$vehicleId');
+    final url = Uri.parse('$baseUrl/parkings/$vehicleId');
     Response response = await http.get(
       url,
       headers: {
@@ -54,7 +61,7 @@ class ParkingRepository {
   }
   
   Future<Parking> update(Parking parking) async {
-    final url = Uri.parse('http://10.0.2.2:8080/parkings/${parking.id}');
+    final url = Uri.parse('$baseUrl/parkings/${parking.id}');
     Response response = await http.put(
       url,
       headers: {
@@ -66,7 +73,7 @@ class ParkingRepository {
   }
   
   Future<Parking?> delete(String id) async {
-    final url = Uri.parse('http://10.0.2.2:8080/parkings/$id');
+    final url = Uri.parse('$baseUrl/parkings/$id');
     Response response = await http.delete(
       url,
       headers: {
