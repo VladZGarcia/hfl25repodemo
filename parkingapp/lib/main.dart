@@ -281,7 +281,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
                                   ),
                                 );
-                                // Optionally, you can refresh the list of vehicles here
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Vehicle added successfully!'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                                setState(() {
+                                  views[2] = const VehicleView(); // Refresh the VehicleView
+                                });
                                 Navigator.of(context).pop();
                               },
                               child: const Text('Add'),

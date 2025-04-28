@@ -21,7 +21,7 @@ class SignupView extends StatelessWidget {
         margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.symmetric(horizontal: 40),
         constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height - 50,
+          minHeight: MediaQuery.of(context).size.height - 90,
         ),
         width: double.infinity,
         child: Column(
@@ -32,7 +32,7 @@ class SignupView extends StatelessWidget {
               children: <Widget>[
                 const SizedBox(height: 60.0),
                 const Text(
-                  "Sign In",
+                  "Sign up",
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
