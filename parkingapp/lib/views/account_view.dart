@@ -173,14 +173,16 @@ _forgotPassword(context) {
 }
 
 _singup(context, VoidCallback onSignup) {
-  return TextButton(
-    onPressed: () {
-      onSignup();
-      // Handle sign up action
-    },
-    child: const Text(
-      "Don't have an account? Sign Up",
-      style: TextStyle(color: Colors.purple),
-    ),
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text("Don't have an account?"),
+      TextButton(
+        onPressed: () {
+          onSignup();
+        },
+        child: const Text("Sign Up", style: TextStyle(color: Colors.purple)),
+      ),
+    ],
   );
 }

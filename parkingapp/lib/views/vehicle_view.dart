@@ -3,7 +3,9 @@ import 'package:parkingapp/repositories/parking_repository.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
 
 class VehicleView extends StatefulWidget {
-  const VehicleView({super.key});
+  final VoidCallback? onVehicleAdded;
+
+  const VehicleView({super.key, this.onVehicleAdded});
 
   @override
   State<VehicleView> createState() => _VehicleViewState();
