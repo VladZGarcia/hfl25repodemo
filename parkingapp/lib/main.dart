@@ -31,7 +31,7 @@ void main() {
     setWindowMinSize(const Size(850, 600));
     setWindowMaxSize(Size.infinite);
   }
-
+  /* BlockProvider(create: (context) => AuthBlock(authRepository), child: MyApp()); */
   runApp(MyApp());
 }
 
@@ -283,12 +283,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                 );
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Vehicle added successfully!'),
+                                    content: Text(
+                                      'Vehicle added successfully!',
+                                    ),
                                     duration: Duration(seconds: 2),
                                   ),
                                 );
                                 setState(() {
-                                  views[2] = const VehicleView(); // Refresh the VehicleView
+                                  views[2] =
+                                      const VehicleView(); // Refresh the VehicleView
                                 });
                                 Navigator.of(context).pop();
                               },

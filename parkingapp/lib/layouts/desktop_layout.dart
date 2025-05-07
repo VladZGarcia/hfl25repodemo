@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
-import 'package:parkingapp/views/vehicle_view.dart';
 import 'package:shared/shared.dart';
 import 'package:uuid/uuid.dart';
 
@@ -133,6 +132,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                   ),
                                   ),
                                 );
+                                // Show success message
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Vehicle added successfully!'),

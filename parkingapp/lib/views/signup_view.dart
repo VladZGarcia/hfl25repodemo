@@ -222,7 +222,8 @@ void _handleSignup(
   String passwordInput,
   String confirmPasswordInput,
   VoidCallback onSignup,
-) async {
+) 
+async {
   final String username = usernameInput;
   final String email = emailInput;
   final String password = passwordInput;
