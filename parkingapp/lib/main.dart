@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
+import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
 import 'package:parkingapp/views/account_view.dart';
 import 'package:parkingapp/views/parking_view.dart';
@@ -31,8 +34,19 @@ void main() {
     setWindowMinSize(const Size(850, 600));
     setWindowMaxSize(Size.infinite);
   }
-  /* BlockProvider(create: (context) => AuthBlock(authRepository), child: MyApp()); */
-  runApp(MyApp());
+
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => VehicleBloc(
+            vehicleRepository: VehicleRepository(),
+          )..add(LoadVehicles()),
+        ),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -127,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
     views = [
       const ParkingView(),
       const TicketView(),
-      const VehicleView(),
+       VehicleView(),
       AccountView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
     ];
   }
@@ -291,7 +305,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 );
                                 setState(() {
                                   views[2] =
-                                      const VehicleView(); // Refresh the VehicleView
+                                       VehicleView(); // Refresh the VehicleView
                                 });
                                 Navigator.of(context).pop();
                               },
