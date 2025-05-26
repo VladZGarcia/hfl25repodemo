@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:parkingapp/blocs/parking/parking_bloc.dart';
+import 'package:parkingapp/blocs/parking/parking_event.dart';
+import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
+import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
+import 'package:parkingapp/repositories/parking_repository.dart';
+import 'package:parkingapp/repositories/parking_space_repository.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
 import 'package:parkingapp/views/account_view.dart';
 import 'package:parkingapp/views/parking_view.dart';
@@ -31,8 +38,26 @@ void main() {
     setWindowMinSize(const Size(850, 600));
     setWindowMaxSize(Size.infinite);
   }
-  /* BlockProvider(create: (context) => AuthBlock(authRepository), child: MyApp()); */
-  runApp(MyApp());
+
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create:
+              (context) =>
+                  VehicleBloc(vehicleRepository: VehicleRepository())
+                    ..add(LoadVehicles()),
+        ),
+        BlocProvider(
+          create: (context) => ParkingBloc(
+            parkingRepository: ParkingRepository(),
+            parkingSpaceRepository: ParkingSpaceRepository(),
+          )..add(LoadParkingSpaces()),
+        ),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -127,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
     views = [
       const ParkingView(),
       const TicketView(),
-      const VehicleView(),
+      VehicleView(),
       AccountView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
     ];
   }
@@ -247,6 +272,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         final uuid = Uuid();
 
                         String registrationNumber = '';
+
+                        // Replace with the actual logged-in user ID and name
+                        // You might want to fetch this from your authentication state or user profile
+                        // when implemented.
                         String loggedInUserId =
                             "9f7efa38-d2e4-478d-8283-6e2b08896269";
                         String ownerName = 'loggedInUser.name';
@@ -269,17 +298,18 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           actions: [
                             TextButton(
-                              onPressed: () async {
-                                await VehicleRepository().addVehicle(
-                                  Vehicle(
-                                    uuid.v4(),
-                                    registrationNumber,
-                                    Person(
-                                      id: loggedInUserId,
-                                      name: ownerName,
-                                      personId: ownerPersonId,
-                                    ),
+                              onPressed: () {
+                                Vehicle vehicle = Vehicle(
+                                  uuid.v4(),
+                                  registrationNumber,
+                                  Person(
+                                    id: loggedInUserId,
+                                    name: ownerName,
+                                    personId: ownerPersonId,
                                   ),
+                                );
+                                context.read<VehicleBloc>().add(
+                                  AddVehicle(vehicle),
                                 );
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -289,10 +319,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                     duration: Duration(seconds: 2),
                                   ),
                                 );
-                                setState(() {
-                                  views[2] =
-                                      const VehicleView(); // Refresh the VehicleView
-                                });
                                 Navigator.of(context).pop();
                               },
                               child: const Text('Add'),

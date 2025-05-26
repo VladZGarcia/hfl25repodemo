@@ -1,120 +1,109 @@
 import 'package:flutter/material.dart';
-import 'package:parkingapp/repositories/parking_repository.dart';
-import 'package:parkingapp/repositories/vehicle_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
+import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
+import 'package:parkingapp/blocs/vehicle/vehicle_state.dart';
+import 'package:shared/shared.dart';
 
-class VehicleView extends StatefulWidget {
+class VehicleView extends StatelessWidget {
   final VoidCallback? onVehicleAdded;
 
-  const VehicleView({super.key, this.onVehicleAdded});
-
-  @override
-  State<VehicleView> createState() => _VehicleViewState();
-}
-
-class _VehicleViewState extends State<VehicleView> {
-  Future future = VehicleRepository().getAll();
-  int _selectedIndex = -1;
-
-  void refreshVehicles() {
-    if (mounted) {
-      setState(() {
-        future = VehicleRepository().getAll();
-      });
-    }
-  }
+  VehicleView({super.key, this.onVehicleAdded});
+  final ValueNotifier<int> selectedIndexNotifier = ValueNotifier<int>(-1);
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        FutureBuilder(
-          future: future,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(
-                        'Vehicles',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        final vehicle = snapshot.data![index];
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () async {
-                              if (mounted) {
-                                setState(() {
-                                  _selectedIndex = index;
-                                });
-                              }
-                              await _handleVehicle(
-                                context,
-                                vehicle,
-                                refreshVehicles,
-                              );
-                            },
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  title: Text(vehicle.registrationNumber),
-                                  subtitle: Text(vehicle.owner.name),
-                                  trailing: IconButton(
-                                    onPressed: () async {
-                                      _handleDeleteVehicle(
-                                        context,
-                                        vehicle,
-                                        refreshVehicles,
-                                      );
-                                    },
-                                    icon: Icon(
-                                      Icons.delete,
-                                      color:
-                                          _selectedIndex == index
-                                              ? Colors.blue
-                                              : null,
-                                    ),
-                                  ),
-                                  leading: Icon(
-                                    Icons.directions_car,
-                                    color:
-                                        _selectedIndex == index
-                                            ? Colors.blue
-                                            : null,
-                                  ),
-                                ),
-                                const Divider(),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Text('Error loading vehicles: ${snapshot.error}'),
-              );
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No vehicles available.'));
-            } else {
+        BlocBuilder<VehicleBloc, VehicleState>(
+          builder: (context, state) {
+            if (state is VehicleInitial) {
+              context.read<VehicleBloc>().add(LoadVehicles());
               return const Center(child: CircularProgressIndicator());
             }
+
+            if (state is VehicleLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is VehicleError) {
+              return Center(child: Text('Error: ${state.message}'));
+            }
+
+            if (state is VehicleLoaded) {
+              return SingleChildScrollView(
+                child: ValueListenableBuilder<int>(
+                  valueListenable: selectedIndexNotifier,
+                  builder: (context, selectedIndex, _) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'Vehicles',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 80),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: state.vehicles.length,
+                          itemBuilder: (context, index) {
+                            final vehicle = state.vehicles[index];
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  selectedIndexNotifier.value = index;
+                                   _handleVehicle(context, vehicle);
+                                },
+                                child: Column(
+                                  children: [
+                                    ListTile(
+                                      title: Text(vehicle.registrationNumber),
+                                      subtitle: Text(vehicle.owner.name),
+                                      trailing: IconButton(
+                                        onPressed: () {
+                                          selectedIndexNotifier.value = index;_handleDeleteVehicle(
+                                            context,
+                                            vehicle,
+                                          );
+                                        },
+                                        icon: Icon(
+                                          Icons.delete,
+                                          color:
+                                              selectedIndex == index
+                                                  ? Colors.blue
+                                                  : null,
+                                        ),
+                                      ),
+                                      leading: Icon(
+                                        Icons.directions_car,
+                                        color:
+                                            selectedIndex == index
+                                                ? Colors.blue
+                                                : null,
+                                      ),
+                                    ),
+                                    const Divider(),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            }
+            return const Center(child: Text('No vehicles available'));
           },
         ),
       ],
@@ -122,139 +111,141 @@ class _VehicleViewState extends State<VehicleView> {
   }
 }
 
-Future<void> _handleVehicle(
-  BuildContext context,
-  vehicle,
-  Function refreshCallback,
-) async {
+Future<void> _handleVehicle(BuildContext context, vehicle) async {
   await showDialog(
     context: context,
     builder: (BuildContext context) {
-      return VehicleDialog(vehicle: vehicle, refreshCallback: refreshCallback);
+      return VehicleDialog(vehicle: vehicle);
     },
   );
 }
 
-class VehicleDialog extends StatefulWidget {
-  final vehicle;
-  final Function refreshCallback;
+class VehicleDialog extends StatelessWidget {
+  final Vehicle vehicle;
 
-  const VehicleDialog({
-    Key? key,
-    required this.vehicle,
-    required this.refreshCallback,
-  }) : super(key: key);
+  final TextEditingController registrationController;
+  final TextEditingController ownerNameController;
+  final ValueNotifier<bool> isEditingNotifier = ValueNotifier<bool>(false);
 
-  @override
-  _VehicleDialogState createState() => _VehicleDialogState();
-}
-
-class _VehicleDialogState extends State<VehicleDialog> {
-  late TextEditingController registrationController;
-  late TextEditingController ownerNameController;
-  bool isEditing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    registrationController = TextEditingController(
-      text: widget.vehicle.registrationNumber,
-    );
-    ownerNameController = TextEditingController(
-      text: widget.vehicle.owner.name,
-    );
-  }
-
-  @override
-  void dispose() {
-    registrationController.dispose();
-    ownerNameController.dispose();
-    super.dispose();
-  }
+  VehicleDialog({super.key, required this.vehicle})
+    : registrationController = TextEditingController(
+        text: vehicle.registrationNumber,
+      ),
+      ownerNameController = TextEditingController(text: vehicle.owner.name);
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(isEditing ? 'Edit Vehicle' : 'Vehicle Details'),
+      title: ValueListenableBuilder<bool>(
+        valueListenable: isEditingNotifier,
+        builder: (context, isEditing, child) {
+          return Text(
+            isEditing ? 'Edit Vehicle' : 'Vehicle Details',
+            textAlign: TextAlign.center,
+          );
+        },
+      ),
       content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isEditing) ...[
-              Text('Registration Number: ${widget.vehicle.registrationNumber}'),
-              Text('Owner Name: ${widget.vehicle.owner.name}'),
-            ] else ...[
-              TextField(
-                controller: registrationController,
-                decoration: const InputDecoration(
-                  labelText: 'Registration Number',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                readOnly: true,
-                controller: ownerNameController,
-                decoration: const InputDecoration(labelText: 'Owner Name'),
-              ),
-            ],
-          ],
+        child: ValueListenableBuilder<bool>(
+          valueListenable: isEditingNotifier,
+          builder: (context, isEditing, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isEditing) ...[
+                  Text('Registration Number: ${vehicle.registrationNumber}'),
+                  Text('Owner Name: ${vehicle.owner.name}'),
+                ] else ...[
+                  TextField(
+                    controller: registrationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Registration Number',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    readOnly: true,
+                    controller: ownerNameController,
+                    decoration: const InputDecoration(labelText: 'Owner Name'),
+                  ),
+                ],
+              ],
+            );
+          },
         ),
       ),
       actions: [
-        if (!isEditing) ...[
-          TextButton(
-            onPressed: () {
-              setState(() {
-                isEditing = true;
-              });
-            },
-            child: const Text('Edit'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Close'),
-          ),
-        ] else ...[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                widget.vehicle.registrationNumber = registrationController.text;
-                await VehicleRepository().update(widget.vehicle);
-                Navigator.of(context).pop();
-                widget.refreshCallback();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Vehicle updated successfully')),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error updating vehicle: $e'),
-                    backgroundColor: Colors.red,
+        ValueListenableBuilder<bool>(
+          valueListenable: isEditingNotifier,
+          builder: (context, isEditing, child) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                if (!isEditing) ...[
+                  TextButton(
+                    onPressed: () {
+                      isEditingNotifier.value = true;
+                    },
+                    child: const Text('Edit'),
                   ),
-                );
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Close'),
+                  ),
+                ] else ...[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      if (registrationController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Registration number cannot be empty',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      try {
+                        vehicle.registrationNumber =
+                            registrationController.text;
+                        context.read<VehicleBloc>().add(UpdateVehicle(vehicle));
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vehicle updated successfully'),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error updating vehicle: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
       ],
     );
   }
 }
 
-Future<void> _handleDeleteVehicle(
-  BuildContext context,
-  vehicle,
-  Function refreshCallback,
-) {
+Future<void> _handleDeleteVehicle(BuildContext context, vehicle) {
   return showDialog(
     context: context,
     builder: (context) {
@@ -271,29 +262,13 @@ Future<void> _handleDeleteVehicle(
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
-              try {
-                var parkingToDelete = await ParkingRepository().getById(
-                  vehicle.id,
-                );
-                if (parkingToDelete != null) {
-                  await ParkingRepository().delete(parkingToDelete.id);
-                }
+            onPressed: () {
 
-                await VehicleRepository().delete(vehicle.id);
-                Navigator.of(context).pop();
-                refreshCallback();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Vehicle deleted successfully')),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error deleting vehicle: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
+              context.read<VehicleBloc>().add(DeleteVehicle(vehicle.id));
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Vehicle deleted successfully')),
+              );
             },
             child: const Text('Delete'),
           ),
