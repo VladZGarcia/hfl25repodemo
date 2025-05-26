@@ -58,9 +58,9 @@ class VehicleView extends StatelessWidget {
                             return Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () async {
+                                onTap: () {
                                   selectedIndexNotifier.value = index;
-                                  await _handleVehicle(context, vehicle);
+                                   _handleVehicle(context, vehicle);
                                 },
                                 child: Column(
                                   children: [
@@ -68,8 +68,8 @@ class VehicleView extends StatelessWidget {
                                       title: Text(vehicle.registrationNumber),
                                       subtitle: Text(vehicle.owner.name),
                                       trailing: IconButton(
-                                        onPressed: () async {
-                                          _handleDeleteVehicle(
+                                        onPressed: () {
+                                          selectedIndexNotifier.value = index;_handleDeleteVehicle(
                                             context,
                                             vehicle,
                                           );
@@ -263,6 +263,7 @@ Future<void> _handleDeleteVehicle(BuildContext context, vehicle) {
           ),
           TextButton(
             onPressed: () {
+
               context.read<VehicleBloc>().add(DeleteVehicle(vehicle.id));
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
