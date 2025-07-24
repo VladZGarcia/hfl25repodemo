@@ -5,6 +5,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
+import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
+import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/repositories/parking_repository.dart';
@@ -49,10 +51,17 @@ void main() {
                     ..add(LoadVehicles()),
         ),
         BlocProvider(
-          create: (context) => ParkingBloc(
-            parkingRepository: ParkingRepository(),
-            parkingSpaceRepository: ParkingSpaceRepository(),
-          )..add(LoadParkingSpaces()),
+          create:
+              (context) => ParkingBloc(
+                parkingRepository: ParkingRepository(),
+                parkingSpaceRepository: ParkingSpaceRepository(),
+              )..add(LoadParkingSpaces()),
+        ),
+        BlocProvider(
+          create:
+              (context) =>
+                  TicketBloc(parkingRepository: ParkingRepository())
+                    ..add(LoadTickets()),
         ),
       ],
       child: MyApp(),
@@ -182,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
               widget.themeNotifier.value == ThemeMode.dark
                   ? darkModeTileBuilder
                   : null,
-          userAgentPackageName: 'com.example.app',
+          userAgentPackageName: 'com.parkingapp.flutter',
         ),
         RichAttributionWidget(
           attributions: [

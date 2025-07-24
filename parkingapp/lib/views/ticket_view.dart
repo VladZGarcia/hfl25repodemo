@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
+import 'package:parkingapp/blocs/ticket/ticket_event.dart';
+import 'package:parkingapp/blocs/ticket/ticket_state.dart';
 import 'package:parkingapp/repositories/parking_repository.dart';
 import 'package:shared/shared.dart';
 
-class TicketView extends StatefulWidget {
-  const TicketView({super.key});
+class TicketView extends StatelessWidget {
+  final VoidCallback? onparkingAdded;
 
-  @override
-  State<TicketView> createState() => _TicketViewState();
-}
-
-class _TicketViewState extends State<TicketView> {
-  Future future = ParkingRepository().getAll();
+  const TicketView({super.key, this.onparkingAdded});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
+    return BlocBuilder<TicketBloc, TicketState>(
+      builder: (context, state) {
+        if (state is TicketInitial) {
+          context.read<TicketBloc>().add(LoadTickets());
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is TicketLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is TicketError) {
+          return Center(child: Text('Error: ${state.message}'));
+        }
+
+        if (state is TicketLoaded) {
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,50 +44,54 @@ class _TicketViewState extends State<TicketView> {
                   padding: const EdgeInsets.only(bottom: 80),
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: snapshot.data!.length,
+                  itemCount: state.tickets.length,
                   itemBuilder: (context, index) {
-                    final ticket = snapshot.data![index];
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () async{
-                         await _handleTicket(context, ticket);
-                          setState(() {
-                            future = ParkingRepository().getAll();
-
-                          });
-                        },
-                        child: Column(
-                          key: ValueKey(ticket.id),
-                          children: [
-                            ListTile(
-                              title: Text(ticket.parkingSpace.adress),
-                              subtitle: Text(
-                                ticket.endTime == null
-                                    ? 'Start: ${ticket.startTime.hour.toString().padLeft(2, '0')}:${ticket.startTime.minute.toString().padLeft(2, '0')}   Ends at: Ongoing'
-                                    : 'Start: ${ticket.startTime.hour.toString().padLeft(2, '0')}:${ticket.startTime.minute.toString().padLeft(2, '0')} Ends : ${ticket.endTime!.hour.toString().padLeft(2, '0')}:${ticket.endTime!.minute.toString().padLeft(2, '0')}',
-                              ),
-                              trailing: Text('cost: ${calculateCost(ticket)}'),
-                              leading: const Icon(Icons.receipt),
-                            ),
-                            const Divider(),
-                          ],
-                        ),
-                      ),
-                    );
+                    final ticket = state.tickets[index];
+                    return TicketListItem(ticket: ticket);
                   },
                 ),
               ],
             ),
           );
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Text('Error loading tickets: ${snapshot.error}'),
-          );
-        } else {
-          return const Center(child: CircularProgressIndicator());
         }
+
+        return const Center(child: Text('No tickets available'));
       },
+    );
+  }
+}
+
+class TicketListItem extends StatelessWidget {
+  final Parking ticket;
+
+  const TicketListItem({super.key, required this.ticket});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          await _handleTicket(context, ticket);
+          context.read<TicketBloc>().add(LoadTickets());
+        },
+        child: Column(
+          key: ValueKey(ticket.id),
+          children: [
+            ListTile(
+              title: Text(ticket.parkingSpace.adress),
+              subtitle: Text(
+                ticket.endTime == null
+                    ? 'Start: ${ticket.startTime.hour.toString().padLeft(2, '0')}:${ticket.startTime.minute.toString().padLeft(2, '0')}   Ends at: Ongoing'
+                    : 'Start: ${ticket.startTime.hour.toString().padLeft(2, '0')}:${ticket.startTime.minute.toString().padLeft(2, '0')} Ends : ${ticket.endTime!.hour.toString().padLeft(2, '0')}:${ticket.endTime!.minute.toString().padLeft(2, '0')}',
+              ),
+              trailing: Text('cost: ${calculateCost(ticket)}'),
+              leading: const Icon(Icons.receipt),
+            ),
+            const Divider(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -197,6 +212,7 @@ class _TicketViewState extends State<TicketView> {
       },
     );
   }
+
   DateTime _convertTimeOfDayToDateTime(TimeOfDay timeOfDay) {
     final now = DateTime.now();
     return DateTime(
@@ -206,5 +222,5 @@ class _TicketViewState extends State<TicketView> {
       timeOfDay.hour,
       timeOfDay.minute,
     );
-  } 
+  }
 }
