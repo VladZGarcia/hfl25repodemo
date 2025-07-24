@@ -47,7 +47,7 @@ void main() {
         BlocProvider(
           create:
               (context) =>
-                  VehicleBloc(vehicleRepository: VehicleRepository())
+                  VehicleBloc(vehicleRepository: VehicleRepository(), parkingRepository: ParkingRepository())
                     ..add(LoadVehicles()),
         ),
         BlocProvider(

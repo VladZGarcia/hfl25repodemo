@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
+import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_state.dart';
@@ -13,100 +15,109 @@ class VehicleView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        BlocBuilder<VehicleBloc, VehicleState>(
-          builder: (context, state) {
-            if (state is VehicleInitial) {
-              context.read<VehicleBloc>().add(LoadVehicles());
-              return const Center(child: CircularProgressIndicator());
-            }
+    return BlocListener<VehicleBloc, VehicleState>(
+      listener: (context, state) {
+        if (state is VehicleLoaded) {
+          // Vehicles have been reloaded, now reload tickets
+          context.read<TicketBloc>().add(LoadTickets());
+        }
+      },
+      child: Stack(
+        children: [
+          BlocBuilder<VehicleBloc, VehicleState>(
+            builder: (context, state) {
+              if (state is VehicleInitial) {
+                context.read<VehicleBloc>().add(LoadVehicles());
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (state is VehicleLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+              if (state is VehicleLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (state is VehicleError) {
-              return Center(child: Text('Error: ${state.message}'));
-            }
+              if (state is VehicleError) {
+                return Center(child: Text('Error: ${state.message}'));
+              }
 
-            if (state is VehicleLoaded) {
-              return SingleChildScrollView(
-                child: ValueListenableBuilder<int>(
-                  valueListenable: selectedIndexNotifier,
-                  builder: (context, selectedIndex, _) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text(
-                            'Vehicles',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+              if (state is VehicleLoaded) {
+                return SingleChildScrollView(
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: selectedIndexNotifier,
+                    builder: (context, selectedIndex, _) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(
+                              'Vehicles',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: state.vehicles.length,
-                          itemBuilder: (context, index) {
-                            final vehicle = state.vehicles[index];
-                            return Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  selectedIndexNotifier.value = index;
-                                   _handleVehicle(context, vehicle);
-                                },
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      title: Text(vehicle.registrationNumber),
-                                      subtitle: Text(vehicle.owner.name),
-                                      trailing: IconButton(
-                                        onPressed: () {
-                                          selectedIndexNotifier.value = index;_handleDeleteVehicle(
-                                            context,
-                                            vehicle,
-                                          );
-                                        },
-                                        icon: Icon(
-                                          Icons.delete,
+                          ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 80),
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: state.vehicles.length,
+                            itemBuilder: (context, index) {
+                              final vehicle = state.vehicles[index];
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    selectedIndexNotifier.value = index;
+                                    _handleVehicle(context, vehicle);
+                                  },
+                                  child: Column(
+                                    children: [
+                                      ListTile(
+                                        title: Text(vehicle.registrationNumber),
+                                        subtitle: Text(vehicle.owner.name),
+                                        trailing: IconButton(
+                                          onPressed: () {
+                                            selectedIndexNotifier.value = index;
+                                            _handleDeleteVehicle(
+                                              context,
+                                              vehicle,
+                                            );
+                                          },
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color:
+                                                selectedIndex == index
+                                                    ? Colors.blue
+                                                    : null,
+                                          ),
+                                        ),
+                                        leading: Icon(
+                                          Icons.directions_car,
                                           color:
                                               selectedIndex == index
                                                   ? Colors.blue
                                                   : null,
                                         ),
                                       ),
-                                      leading: Icon(
-                                        Icons.directions_car,
-                                        color:
-                                            selectedIndex == index
-                                                ? Colors.blue
-                                                : null,
-                                      ),
-                                    ),
-                                    const Divider(),
-                                  ],
+                                      const Divider(),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              );
-            }
-            return const Center(child: Text('No vehicles available'));
-          },
-        ),
-      ],
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                );
+              }
+              return const Center(child: Text('No vehicles available'));
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -263,11 +274,12 @@ Future<void> _handleDeleteVehicle(BuildContext context, vehicle) {
           ),
           TextButton(
             onPressed: () {
-
               context.read<VehicleBloc>().add(DeleteVehicle(vehicle.id));
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Vehicle deleted successfully')),
+                const SnackBar(
+                  content: Text('Vehicle and tickets deleted successfully'),
+                ),
               );
             },
             child: const Text('Delete'),
