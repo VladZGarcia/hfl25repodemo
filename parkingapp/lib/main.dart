@@ -5,12 +5,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
+import 'package:parkingapp/blocs/signup/signup_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/repositories/parking_repository.dart';
 import 'package:parkingapp/repositories/parking_space_repository.dart';
+import 'package:parkingapp/repositories/person_repository.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
 import 'package:parkingapp/views/account_view.dart';
 import 'package:parkingapp/views/parking_view.dart';
@@ -46,9 +48,10 @@ void main() {
       providers: [
         BlocProvider(
           create:
-              (context) =>
-                  VehicleBloc(vehicleRepository: VehicleRepository(), parkingRepository: ParkingRepository())
-                    ..add(LoadVehicles()),
+              (context) => VehicleBloc(
+                vehicleRepository: VehicleRepository(),
+                parkingRepository: ParkingRepository(),
+              )..add(LoadVehicles()),
         ),
         BlocProvider(
           create:
@@ -62,6 +65,9 @@ void main() {
               (context) =>
                   TicketBloc(parkingRepository: ParkingRepository())
                     ..add(LoadTickets()),
+        ),
+        BlocProvider(
+          create: (context) => SignupBloc(personRepository: PersonRepository()),
         ),
       ],
       child: MyApp(),
