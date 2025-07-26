@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:parkingapp/blocs/login/login_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
 import 'package:parkingapp/blocs/signup/signup_bloc.dart';
@@ -14,7 +15,7 @@ import 'package:parkingapp/repositories/parking_repository.dart';
 import 'package:parkingapp/repositories/parking_space_repository.dart';
 import 'package:parkingapp/repositories/person_repository.dart';
 import 'package:parkingapp/repositories/vehicle_repository.dart';
-import 'package:parkingapp/views/account_view.dart';
+import 'package:parkingapp/views/login_view.dart';
 import 'package:parkingapp/views/parking_view.dart';
 import 'package:parkingapp/views/settings_view.dart';
 import 'package:parkingapp/views/signup_view.dart';
@@ -68,6 +69,9 @@ void main() {
         ),
         BlocProvider(
           create: (context) => SignupBloc(personRepository: PersonRepository()),
+        ),
+        BlocProvider(
+          create: (context) => LoginBloc(personRepository: PersonRepository()),
         ),
       ],
       child: MyApp(),
@@ -168,7 +172,7 @@ class _MyHomePageState extends State<MyHomePage> {
       const ParkingView(),
       const TicketView(),
       VehicleView(),
-      AccountView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
+      LoginView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
     ];
   }
 
@@ -224,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   onLogout: _toggleLoginState,
                 )
                 : (_isSignedIn
-                    ? AccountView(
+                    ? LoginView(
                       onLogin: _toggleLoginState,
                       onSignup: _toggleSignupState,
                     )
