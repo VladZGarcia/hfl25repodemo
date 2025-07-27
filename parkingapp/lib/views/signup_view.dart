@@ -141,10 +141,10 @@ class SignupView extends StatelessWidget {
                         } else {
                           context.read<SignupBloc>().add(
                             SignupSubmitted(
-                              username: _usernameController.text,
-                              email: _emailController.text,
-                              password: _passwordController.text,
-                              confirmPassword: _confirmPasswordController.text,
+                              username: _usernameController.text.trim(),
+                              email: _emailController.text.trim(),
+                              password: _passwordController.text.trim(),
+                              confirmPassword: _confirmPasswordController.text.trim(),
                             ),
                           );
                         }

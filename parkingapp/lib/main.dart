@@ -6,6 +6,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:parkingapp/blocs/login/login_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
+import 'package:parkingapp/blocs/settings/settings_bloc.dart';
+import 'package:parkingapp/blocs/settings/settings_state.dart';
 import 'package:parkingapp/blocs/signup/signup_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_event.dart';
@@ -73,6 +75,7 @@ void main() {
         BlocProvider(
           create: (context) => LoginBloc(personRepository: PersonRepository()),
         ),
+        BlocProvider(create: (context) => SettingsBloc()),
       ],
       child: MyApp(),
     ),
@@ -80,63 +83,61 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key});
-  final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeNotifier,
-      builder: (context, ThemeMode currentMode, child) {
+    return BlocListener<SettingsBloc, SettingsState>(
+      listenWhen:
+          (previous, current) => previous.themeMode != current.themeMode,
+      listener: (context, state) {
         SystemChrome.setSystemUIOverlayStyle(
-          themeNotifier.value == ThemeMode.dark
+          state.themeMode == ThemeMode.dark
               ? SystemUiOverlayStyle.light
               : SystemUiOverlayStyle.dark,
         );
-        return MaterialApp(
-          color: Color.fromARGB(255, 230, 216, 216),
-          debugShowCheckedModeBanner: false,
-          title: 'Flutter Demo',
-          theme: ThemeData(
-            colorScheme: ColorScheme.light(
-              primary: Colors.purple,
-              surface: const Color(0xFFE6D8D8),
-              onSurface: Colors.grey[900]!,
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFFE6D8D8),
-              foregroundColor: Colors.black, // Text color for AppBar
-            ),
-            scaffoldBackgroundColor: const Color(0xFFE6D8D8),
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.dark(
-              primary: Colors.blue,
-              surface: Colors.grey[900]!,
-              onSurface: Colors.white,
-            ),
-            appBarTheme: AppBarTheme(
-              backgroundColor: Colors.grey[900],
-              foregroundColor: Colors.white,
-            ),
-            scaffoldBackgroundColor: Colors.black,
-          ),
-          themeMode: currentMode,
-          home: MyHomePage(themeNotifier: themeNotifier, title: 'Parking App'),
-        );
       },
+      child: BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, state) {
+          return MaterialApp(
+            color: const Color.fromARGB(255, 230, 216, 216),
+            debugShowCheckedModeBanner: false,
+            title: 'Flutter Demo',
+            theme: ThemeData(
+              colorScheme: ColorScheme.light(
+                primary: Colors.purple,
+                surface: const Color(0xFFE6D8D8),
+                onSurface: Colors.grey[900]!,
+              ),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFFE6D8D8),
+                foregroundColor: Colors.black,
+              ),
+              scaffoldBackgroundColor: const Color(0xFFE6D8D8),
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.dark(
+                primary: Colors.blue,
+                surface: Colors.grey[900]!,
+                onSurface: Colors.white,
+              ),
+              appBarTheme: AppBarTheme(
+                backgroundColor: Colors.grey[900],
+                foregroundColor: Colors.white,
+              ),
+              scaffoldBackgroundColor: Colors.black,
+            ),
+            themeMode: state.themeMode,
+            home: MyHomePage(title: 'Parking App'),
+          );
+        },
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  final ValueNotifier<ThemeMode> themeNotifier;
-
-  const MyHomePage({
-    super.key,
-    required this.title,
-    required this.themeNotifier,
-  });
+  const MyHomePage({super.key, required this.title});
 
   final String title;
 
@@ -182,6 +183,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for logout in SettingsBloc and update _isLoggedIn/_isSignedIn
+    return BlocListener<SettingsBloc, SettingsState>(
+      listenWhen:
+          (previous, current) => previous.isLoggedOut != current.isLoggedOut,
+      listener: (context, state) {
+        if (state.isLoggedOut) {
+          setState(() {
+            _isLoggedIn = false;
+            _isSignedIn = false;
+          });
+        }
+      },
+      child: _buildMainContent(context),
+    );
+  }
+
+  Widget _buildMainContent(BuildContext context) {
+    // Get theme mode from BLoC
+    final isDark = context.select<SettingsBloc, bool>(
+      (bloc) => bloc.state.themeMode == ThemeMode.dark,
+    );
+
     final mapWidget = FlutterMap(
       options: MapOptions(
         onTap: (_, __) {
@@ -196,11 +219,9 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          /* subdomains: isDark ? ['a', 'b', 'c', 'd'] : [], */
           tileProvider: CancellableNetworkTileProvider(),
-          tileBuilder:
-              widget.themeNotifier.value == ThemeMode.dark
-                  ? darkModeTileBuilder
-                  : null,
+          tileBuilder: isDark ? darkModeTileBuilder : null,
           userAgentPackageName: 'com.parkingapp.flutter',
         ),
         RichAttributionWidget(
@@ -223,10 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final contentWidget =
         _currentIndex == 3
             ? (_isLoggedIn
-                ? SettingsPage(
-                  themeNotifier: widget.themeNotifier,
-                  onLogout: _toggleLoginState,
-                )
+                ? const SettingsPage()
                 : (_isSignedIn
                     ? LoginView(
                       onLogin: _toggleLoginState,
@@ -237,7 +255,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return ResponsiveLayout(
       mobile: Scaffold(
-        backgroundColor: Color.fromARGB(255, 230, 216, 216),
+        backgroundColor: const Color.fromARGB(255, 230, 216, 216),
         body: Stack(
           children: [
             mapWidget,
@@ -293,8 +311,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         String registrationNumber = '';
 
                         // Replace with the actual logged-in user ID and name
-                        // You might want to fetch this from your authentication state or user profile
-                        // when implemented.
                         String loggedInUserId =
                             "9f7efa38-d2e4-478d-8283-6e2b08896269";
                         String ownerName = 'loggedInUser.name';
@@ -391,10 +407,13 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                Icons.account_box_outlined,
+                _isLoggedIn ? Icons.settings : Icons.account_box_outlined,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
-              label: 'Account',
+              label:
+                  _isLoggedIn
+                      ? 'Settings'
+                      : (_isSignedIn ? 'Login' : 'Sign up'),
             ),
           ],
         ),
@@ -402,7 +421,6 @@ class _MyHomePageState extends State<MyHomePage> {
       desktop: DesktopLayout(
         map: mapWidget,
         content: contentWidget,
-        themeNotifier: widget.themeNotifier,
         currentIndex: _currentIndex,
         onIndexChanged: (index) {
           setState(() {

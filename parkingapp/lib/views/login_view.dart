@@ -136,8 +136,8 @@ class LoginView extends StatelessWidget {
                         } else {
                           context.read<LoginBloc>().add(
                             LoginSubmitted(
-                              email: _emailController.text,
-                              password: _passwordController.text,
+                              email: _emailController.text.trim(),
+                              password: _passwordController.text.trim(),
                             ),
                           );
                         }
