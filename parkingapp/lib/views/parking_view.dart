@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
 import 'package:parkingapp/blocs/parking/parking_state.dart';
+import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
+import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_state.dart';
@@ -78,14 +80,13 @@ class ParkingView extends StatelessWidget {
   }
 
   Future<void> _handleParking(BuildContext context, ParkingState parkingState) {
-
     return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return BlocBuilder<VehicleBloc, VehicleState>(
           builder: (context, vehicleState) {
-             if (vehicleState is VehicleInitial) {
+            if (vehicleState is VehicleInitial) {
               context.read<VehicleBloc>().add(LoadVehicles());
               return const Center(child: CircularProgressIndicator());
             }
@@ -99,7 +100,6 @@ class ParkingView extends StatelessWidget {
             }
             return BlocBuilder<ParkingBloc, ParkingState>(
               builder: (context, parkingState) {
-                
                 return AlertDialog(
                   title: const Text('Add Parking'),
                   content: Column(
@@ -109,16 +109,20 @@ class ParkingView extends StatelessWidget {
                         value: parkingState.selectedVehicle?.id,
                         hint: const Text('Select a vehicle'),
                         onChanged: (String? newVehicleId) {
-                          if (newVehicleId != null && vehicleState is VehicleLoaded) {
+                          if (newVehicleId != null &&
+                              vehicleState is VehicleLoaded) {
                             final selectedVehicle = vehicleState.vehicles
-                                .firstWhere((vehicle) => vehicle.id == newVehicleId);
+                                .firstWhere(
+                                  (vehicle) => vehicle.id == newVehicleId,
+                                );
                             context.read<ParkingBloc>().add(
-                              SelectVehicleEvent(selectedVehicle),);
+                              SelectVehicleEvent(selectedVehicle),
+                            );
                           }
-                          
                         },
-                        items: vehicleState is VehicleLoaded
-                            ? vehicleState.vehicles.map((vehicle) {
+                        items:
+                            vehicleState is VehicleLoaded
+                                ? vehicleState.vehicles.map((vehicle) {
                                   return DropdownMenuItem<String>(
                                     value: vehicle.id,
                                     child: Text(vehicle.registrationNumber),
@@ -126,7 +130,7 @@ class ParkingView extends StatelessWidget {
                                 }).toList()
                                 : [],
                       ),
-                
+
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: () async {
@@ -137,8 +141,8 @@ class ParkingView extends StatelessWidget {
                           );
                           if (pickedEndTime != null) {
                             context.read<ParkingBloc>().add(
-                            UpdateParkingTimeEvent(pickedEndTime),
-                          );
+                              UpdateParkingTimeEvent(pickedEndTime),
+                            );
                           }
                         },
                         child: Text(
@@ -148,9 +152,13 @@ class ParkingView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text('Parking Space: ${parkingState.selectedParkingSpace?.adress}'),
+                      Text(
+                        'Parking Space: ${parkingState.selectedParkingSpace?.adress}',
+                      ),
                       if (parkingState.selectedVehicle?.id != null)
-                        Text('Vehicle: ${parkingState.selectedVehicle?.registrationNumber}'),
+                        Text(
+                          'Vehicle: ${parkingState.selectedVehicle?.registrationNumber}',
+                        ),
                       if (parkingState.startTime != null)
                         Text(
                           'Start Time: ${parkingState.startTime!.hour.toString().padLeft(2, '0')}:${parkingState.startTime!.minute.toString().padLeft(2, '0')}',
@@ -164,23 +172,29 @@ class ParkingView extends StatelessWidget {
                             : 'End Time: Ongoing',
                       ),
                       if (parkingState.cost != null)
-                        Text('Cost: \$${parkingState.cost!.toStringAsFixed(2)}'),
+                        Text(
+                          'Cost: \$${parkingState.cost!.toStringAsFixed(2)}',
+                        ),
                     ],
                   ),
                   actions: [
                     TextButton(
                       onPressed:
-                          (parkingState.selectedVehicle != null && parkingState.startTime != null)
+                          (parkingState.selectedVehicle != null &&
+                                  parkingState.startTime != null)
                               ? () {
                                 context.read<ParkingBloc>().add(
-                              AddParkingEvent(
-                                vehicle: parkingState.selectedVehicle!,
-                                parkingSpace: parkingState.selectedParkingSpace!,
-                                startTime: parkingState.startTime!.toDateTime(),
-                                endTime: parkingState.endTime?.toDateTime(),
-                              ),
-                            );
-
+                                  AddParkingEvent(
+                                    vehicle: parkingState.selectedVehicle!,
+                                    parkingSpace:
+                                        parkingState.selectedParkingSpace!,
+                                    startTime:
+                                        parkingState.startTime!.toDateTime(),
+                                    endTime: parkingState.endTime?.toDateTime(),
+                                  ),
+                                );
+                                // Notify TicketBloc to reload tickets
+                                context.read<TicketBloc>().add(LoadTickets());
                                 Navigator.of(context).pop();
                               }
                               : null,
@@ -195,7 +209,7 @@ class ParkingView extends StatelessWidget {
                     ),
                   ],
                 );
-              }
+              },
             );
           },
         );
