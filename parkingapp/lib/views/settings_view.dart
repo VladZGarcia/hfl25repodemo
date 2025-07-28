@@ -15,8 +15,9 @@ class SettingsPage extends StatelessWidget {
           (previous, current) => previous.isLoggedOut != current.isLoggedOut,
       listener: (context, state) {
         if (state.isLoggedOut) {
-          // Navigate to login or perform logout logic
           Navigator.of(context).pushReplacementNamed('/login');
+          // Reset the flag so logout works next time
+          context.read<SettingsBloc>().add(ResetLogoutEvent());
         }
       },
       child: BlocBuilder<SettingsBloc, SettingsState>(

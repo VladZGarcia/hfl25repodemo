@@ -5,7 +5,10 @@ class SettingsState extends Equatable {
   final ThemeMode themeMode;
   final bool isLoggedOut;
 
-  const SettingsState({required this.themeMode, this.isLoggedOut = false});
+  const SettingsState({
+    this.themeMode = ThemeMode.light,
+    this.isLoggedOut = false,
+  });
 
   SettingsState copyWith({ThemeMode? themeMode, bool? isLoggedOut}) {
     return SettingsState(

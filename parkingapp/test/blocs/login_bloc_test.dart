@@ -8,7 +8,6 @@ import 'package:shared/shared.dart';
 
 import '../mocks/mock_repositories.dart';
 
-
 void main() {
   late MockPersonRepository mockPersonRepository;
   late LoginBloc loginBloc;
@@ -47,14 +46,32 @@ void main() {
     );
 
     blocTest<LoginBloc, LoginState>(
-      'emits [LoginLoading, LoginFailure] when login fails',
+      'emits [LoginLoading, LoginFailure] when email does not exist',
       build: () {
         when(() => mockPersonRepository.getAll()).thenAnswer((_) async => []);
         return LoginBloc(personRepository: mockPersonRepository);
       },
       act:
           (bloc) => bloc.add(
-            LoginSubmitted(email: 'wrong@example.com', password: 'wrong'),
+            LoginSubmitted(email: 'notfound@example.com', password: 'password'),
+          ),
+      expect: () => [isA<LoginLoading>(), isA<LoginFailure>()],
+    );
+
+    blocTest<LoginBloc, LoginState>(
+      'emits [LoginLoading, LoginFailure] when password is incorrect',
+      build: () {
+        when(
+          () => mockPersonRepository.getAll(),
+        ).thenAnswer((_) async => [testPerson]);
+        return LoginBloc(personRepository: mockPersonRepository);
+      },
+      act:
+          (bloc) => bloc.add(
+            LoginSubmitted(
+              email: 'test@example.com',
+              password: 'wrongpassword',
+            ),
           ),
       expect: () => [isA<LoginLoading>(), isA<LoginFailure>()],
     );

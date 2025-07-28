@@ -7,6 +7,7 @@ import 'package:parkingapp/blocs/login/login_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
 import 'package:parkingapp/blocs/settings/settings_bloc.dart';
+import 'package:parkingapp/blocs/settings/settings_event.dart';
 import 'package:parkingapp/blocs/settings/settings_state.dart';
 import 'package:parkingapp/blocs/signup/signup_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
@@ -192,7 +193,12 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             _isLoggedIn = false;
             _isSignedIn = false;
+            _currentIndex = 3;
           });
+          context.read<SettingsBloc>().add(
+            ToggleThemeEvent(false),
+          ); // Reset to light mode
+          context.read<SettingsBloc>().add(ResetLogoutEvent());
         }
       },
       child: _buildMainContent(context),
