@@ -1,22 +1,13 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_state.dart';
-import 'package:parkingapp/repositories/vehicle_repository.dart';
-import 'package:parkingapp/repositories/parking_repository.dart';
 import 'package:shared/shared.dart';
 
-// Mocks and fakes
-class MockVehicleRepository extends Mock implements VehicleRepository {}
+import '../mocks/mock_repositories.dart';
 
-class MockParkingRepository extends Mock implements ParkingRepository {}
-
-class FakeVehicle extends Fake implements Vehicle {}
-
-class FakeParking extends Fake implements Parking {}
 
 void main() {
   setUpAll(() {
@@ -133,10 +124,10 @@ void main() {
         ).thenAnswer((_) async => [testParking]);
         when(
           () => mockParkingRepository.delete(any()),
-        ).thenAnswer((_) async {});
+        ).thenAnswer((_) async => null);
         when(
           () => mockVehicleRepository.delete(any()),
-        ).thenAnswer((_) async {});
+        ).thenAnswer((_) async => null);
         when(() => mockVehicleRepository.getAll()).thenAnswer((_) async => []);
         return vehicleBloc;
       },
