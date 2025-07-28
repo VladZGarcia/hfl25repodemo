@@ -1,3 +1,4 @@
+
 # ParkingApp
 
 A complete Flutter application for managing parking, vehicles, and tickets, featuring modern UI, map integration, and robust error handling.
@@ -133,3 +134,4 @@ Each BLoC manages its own part of the application's state and logic.
 - [Dart Documentation](https://dart.dev/docs)
 - [Bloc Library Documentation](https://bloclibrary.dev/#/)
 - [Flutter & Dart - The Complete Guide](https://www.udemy.com/course/learn-flutter-dart-to-build-ios-android-apps/) (Paid Course)
+
