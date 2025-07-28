@@ -14,4 +14,10 @@ class ToggleThemeEvent extends SettingsEvent {
   List<Object?> get props => [isDark];
 }
 
-class LogoutEvent extends SettingsEvent {}
+class LogoutEvent extends SettingsEvent {
+  const LogoutEvent();
+}
+
+class ResetLogoutEvent extends SettingsEvent {
+  const ResetLogoutEvent();
+}

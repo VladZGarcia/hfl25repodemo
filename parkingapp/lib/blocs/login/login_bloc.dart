@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared/shared.dart';
 import '../login/login_event.dart';
 import '../login/login_state.dart';
 import 'package:parkingapp/repositories/person_repository.dart';
@@ -16,14 +17,23 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(LoginLoading());
     try {
       final persons = await personRepository.getAll();
-      final bool emailExists = persons.any((person) => person.email == event.email);
-      if (emailExists) {
+      Person? loggedInPerson;
+      try {
+        loggedInPerson = persons.firstWhere(
+          (person) => person.email == event.email,
+        );
+      } catch (e) {
+        loggedInPerson = null;
+      }
+      final bool passwordMatches = loggedInPerson?.password == event.password;
+      final bool emailExists = loggedInPerson != null;
+      if (emailExists && passwordMatches) {
         emit(LoginSuccess());
       } else {
         emit(const LoginFailure("Invalid email or password"));
       }
     } catch (e) {
-      emit(const LoginFailure("Login failed"));
+      emit(LoginFailure("Login failed: ${e.toString()}"));
     }
   }
 }
