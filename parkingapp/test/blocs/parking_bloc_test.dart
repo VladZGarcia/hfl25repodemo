@@ -5,21 +5,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
 import 'package:parkingapp/blocs/parking/parking_state.dart';
-import 'package:parkingapp/repositories/parking_repository.dart';
-import 'package:parkingapp/repositories/parking_space_repository.dart';
 import 'package:shared/shared.dart';
 
-// Mocks and fakes
-class MockParkingRepository extends Mock implements ParkingRepository {}
+import '../mocks/mock_repositories.dart';
 
-class MockParkingSpaceRepository extends Mock
-    implements ParkingSpaceRepository {}
 
-class FakeParkingSpace extends Fake implements Parkingspace {}
-
-class FakeVehicle extends Fake implements Vehicle {}
-
-class FakeParking extends Fake implements Parking {} // <-- Add this
 
 void main() {
   setUpAll(() {

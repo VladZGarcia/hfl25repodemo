@@ -4,13 +4,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:parkingapp/blocs/signup/signup_bloc.dart';
 import 'package:parkingapp/blocs/signup/signup_event.dart';
 import 'package:parkingapp/blocs/signup/signup_state.dart';
-import 'package:parkingapp/repositories/person_repository.dart';
 import 'package:shared/shared.dart';
 
-// Mock repository
-class MockPersonRepository extends Mock implements PersonRepository {}
+import '../mocks/mock_repositories.dart';
 
-class FakePerson extends Fake implements Person {}
+
 
 void main() {
   setUpAll(() {

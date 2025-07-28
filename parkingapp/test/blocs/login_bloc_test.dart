@@ -4,11 +4,10 @@ import 'package:mocktail/mocktail.dart';
 import 'package:parkingapp/blocs/login/login_bloc.dart';
 import 'package:parkingapp/blocs/login/login_event.dart';
 import 'package:parkingapp/blocs/login/login_state.dart';
-import 'package:parkingapp/repositories/person_repository.dart';
 import 'package:shared/shared.dart';
 
-// Mock repository
-class MockPersonRepository extends Mock implements PersonRepository {}
+import '../mocks/mock_repositories.dart';
+
 
 void main() {
   late MockPersonRepository mockPersonRepository;
