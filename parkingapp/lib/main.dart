@@ -33,9 +33,18 @@ import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_ti
 import 'layouts/desktop_layout.dart';
 import 'widgets/responsive_layout.dart';
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+
+
+
+void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+
+await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+);
 
   if (kIsWeb) {
     // Set minimum window size for web
