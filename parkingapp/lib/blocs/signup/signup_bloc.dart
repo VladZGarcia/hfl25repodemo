@@ -38,32 +38,32 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
       if (credential.user == null) {
         emit(const SignupFailure("Failed to create account"));
         return;
-      }else {
+      } else {
+        // add userto Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(credential.user!.uid)
+            .set({
+              'name': event.username,
+              'email': event.email,
+              'personId': 1234567890,
+            });
         // add to local database
-        final uuid = Uuid();
         await personRepository.addPerson(
           Person(
-            id: uuid.v4(),
+            id: credential.user!.uid,
             name: event.username,
             email: event.email,
             password: event.password,
             // personId can be set to null or a specific value if needed
             personId: 1234567890,
           ),
-          
         );
-        // add to Firestore
-        await FirebaseFirestore.instance
-          .collection('users')
-          .doc(credential.user!.uid)
-          .set({
-            'name': event.username,
-            'email': event.email,
-            'personId': 1234567890, 
-          });
+        //logout after signup
+        // This is optional
+        await FirebaseAuth.instance.signOut();
         emit(SignupSuccess());
       }
-
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         emit(const SignupFailure("The password provided is too weak."));
@@ -75,12 +75,12 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
         emit(const SignupFailure("The account already exists for that email."));
         return;
       } else {
-        emit( SignupFailure('error: ${e.code}'));
+        emit(SignupFailure('error: ${e.code}'));
         return;
-      } 
-      
+      }
     } catch (e) {
-      emit( SignupFailure('error: ${e.toString()}'));
+      emit(SignupFailure('error: ${e.toString()}'));
+      return;
     }
   }
 }

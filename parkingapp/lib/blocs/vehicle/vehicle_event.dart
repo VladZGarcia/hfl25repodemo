@@ -8,9 +8,7 @@ abstract class VehicleEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class LoadVehicles extends VehicleEvent {
-  
-}
+class LoadVehicles extends VehicleEvent {}
 
 class AddVehicle extends VehicleEvent {
   final Vehicle vehicle;
@@ -38,3 +36,5 @@ class DeleteVehicle extends VehicleEvent {
   @override
   List<Object> get props => [id];
 }
+
+class ResetVehicles extends VehicleEvent {}

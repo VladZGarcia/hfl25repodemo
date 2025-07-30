@@ -36,10 +36,31 @@ class VehicleView extends StatelessWidget {
               }
 
               if (state is VehicleError) {
-                return Center(child: Text('Error: ${state.message}'));
+                if (state.message.contains("User not logged in")) {
+                  return Center(
+                    child: Text(
+                      'Not logged in',
+                      style: TextStyle(color: Colors.red, fontSize: 18),
+                    ),
+                  );
+                }
+                return Center(
+                  child: Text(
+                    'Error: ${state.message}',
+                    style: TextStyle(color: Colors.red, fontSize: 18),
+                  ),
+                );
               }
 
               if (state is VehicleLoaded) {
+                if (state.vehicles.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Add vehicles',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  );
+                }
                 return SingleChildScrollView(
                   child: ValueListenableBuilder<int>(
                     valueListenable: selectedIndexNotifier,

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -36,15 +37,10 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-
-
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   if (kIsWeb) {
     // Set minimum window size for web
@@ -167,13 +163,18 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _isLoggedIn = !_isLoggedIn;
     });
+    // Refresh vehicles after login
+    if (_isLoggedIn) {
+      context.read<VehicleBloc>().add(LoadVehicles());
+      context.read<ParkingBloc>().add(LoadParkingSpaces());
+    }
   }
 
   void _toggleSignupState() {
     setState(() {
       _isSignedIn = !_isSignedIn;
-      _isLoggedIn = false; 
-      _currentIndex = 3;  // Show ParkingView
+      _isLoggedIn = false;
+      _currentIndex = 3;
     });
   }
 
@@ -210,6 +211,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ToggleThemeEvent(false),
           ); // Reset to light mode
           context.read<SettingsBloc>().add(ResetLogoutEvent());
+          context.read<VehicleBloc>().add(ResetVehicles());
+          context.read<ParkingBloc>().add(ResetParkingEvent());
         }
       },
       child: _buildMainContent(context),
@@ -317,22 +320,15 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         floatingActionButton:
-            _currentIndex == 2
+            (_currentIndex == 2 && _isLoggedIn)
                 ? FloatingActionButton(
                   onPressed: () {
                     showDialog(
                       context: context,
                       builder: (context) {
                         final uuid = Uuid();
-
+                        
                         String registrationNumber = '';
-
-                        // Replace with the actual logged-in user ID and name
-                        String loggedInUserId =
-                            "9f7efa38-d2e4-478d-8283-6e2b08896269";
-                        String ownerName = 'loggedInUser.name';
-                        int ownerPersonId = 0123456789;
-
                         return AlertDialog(
                           title: const Text('Add Vehicle'),
                           content: Column(
@@ -350,14 +346,20 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           actions: [
                             TextButton(
-                              onPressed: () {
+                              onPressed: () async{
+                                final credential = FirebaseAuth.instance.currentUser;
+                                if (credential != null) {
+                                  // Get the current user from persons collection
+                                  final personRepository = PersonRepository();
+                                  final person = await personRepository.getById(credential.uid);
+                                
                                 Vehicle vehicle = Vehicle(
                                   uuid.v4(),
                                   registrationNumber,
                                   Person(
-                                    id: loggedInUserId,
-                                    name: ownerName,
-                                    personId: ownerPersonId,
+                                    id: person!.id,
+                                    name: person.name,
+                                    personId: person.personId,
                                   ),
                                 );
                                 context.read<VehicleBloc>().add(
@@ -372,6 +374,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 );
                                 Navigator.of(context).pop();
+                              }
                               },
                               child: const Text('Add'),
                             ),
@@ -397,6 +400,13 @@ class _MyHomePageState extends State<MyHomePage> {
             setState(() {
               _currentIndex = newIndex;
               _currentChildSize = _initialChildSizes[newIndex];
+              // Clamp value to allowed range
+              if (_currentChildSize > _maxChildSizes[_currentIndex]) {
+                _currentChildSize = _maxChildSizes[_currentIndex];
+              }
+              if (_currentChildSize < _minChildSizes[_currentIndex]) {
+                _currentChildSize = _minChildSizes[_currentIndex];
+              }
             });
           },
           items: [
