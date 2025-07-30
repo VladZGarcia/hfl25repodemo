@@ -23,12 +23,21 @@ class SignupView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
+          Navigator.of(context, rootNavigator: true).pop();
         }
         if (state is SignupSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Account created successfully")),
           );
+          Navigator.of(context, rootNavigator: true).pop();
           onSignup();
+        }
+        if (state is SignupLoading) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
         }
       },
       child: BlocBuilder<SignupBloc, SignupState>(
@@ -144,7 +153,8 @@ class SignupView extends StatelessWidget {
                               username: _usernameController.text.trim(),
                               email: _emailController.text.trim(),
                               password: _passwordController.text.trim(),
-                              confirmPassword: _confirmPasswordController.text.trim(),
+                              confirmPassword:
+                                  _confirmPasswordController.text.trim(),
                             ),
                           );
                         }

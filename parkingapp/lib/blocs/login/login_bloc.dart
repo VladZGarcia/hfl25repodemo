@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared/shared.dart';
 import '../login/login_event.dart';
@@ -8,6 +9,22 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final PersonRepository personRepository;
   LoginBloc({required this.personRepository}) : super(LoginInitial()) {
     on<LoginSubmitted>(_onLoginSubmitted);
+    on<LoginEvent>(_onLoginEvent);
+  }
+
+  Future<void> _onLoginEvent(
+    LoginEvent event,
+    Emitter<LoginState> emit,
+  ) async {
+    FirebaseAuth.instance
+  .authStateChanges()
+  .listen((User? user) {
+    if (user != null) {
+      emit(LoginSuccess());
+    } else {
+      emit(LoginInitial());
+    }
+  });
   }
 
   Future<void> _onLoginSubmitted(
