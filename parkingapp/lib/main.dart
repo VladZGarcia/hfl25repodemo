@@ -172,7 +172,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _toggleSignupState() {
     setState(() {
       _isSignedIn = !_isSignedIn;
-      _isLoggedIn = true; // Go straight to settings
+      _isLoggedIn = false; 
       _currentIndex = 3;  // Show ParkingView
     });
   }

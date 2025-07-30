@@ -21,13 +21,22 @@ class LoginView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
+         /*  Navigator.of(context, rootNavigator: true).pop(); // Close the loading dialog */
         }
         if (state is LoginSuccess) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text("Login successful")));
+          /* Navigator.of(context, rootNavigator: true).pop(); */
           onLogin();
         }
+        /* if (state is LoginLoading) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+        } */
       },
       child: SingleChildScrollView(
         child: Container(

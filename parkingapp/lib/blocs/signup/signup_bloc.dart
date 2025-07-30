@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'signup_event.dart';
@@ -38,6 +39,7 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
         emit(const SignupFailure("Failed to create account"));
         return;
       }else {
+        // add to local database
         final uuid = Uuid();
         await personRepository.addPerson(
           Person(
@@ -50,6 +52,15 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
           ),
           
         );
+        // add to Firestore
+        await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set({
+            'name': event.username,
+            'email': event.email,
+            'personId': 1234567890, 
+          });
         emit(SignupSuccess());
       }
 

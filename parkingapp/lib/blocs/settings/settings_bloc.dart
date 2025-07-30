@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'settings_event.dart';
 import 'settings_state.dart';
@@ -13,7 +14,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         ),
       );
     });
-    on<LogoutEvent>((event, emit) {
+    on<LogoutEvent>((event, emit) async {
+      await FirebaseAuth.instance.signOut();
       emit(state.copyWith(isLoggedOut: true));
     });
     on<ResetLogoutEvent>((event, emit) {
