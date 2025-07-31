@@ -28,3 +28,8 @@ class DeleteTicket extends TicketEvent {
   @override
   List<Object> get props => [ticketId];
 }
+
+class ResetTickets extends TicketEvent {
+  @override
+  List<Object> get props => [];
+}

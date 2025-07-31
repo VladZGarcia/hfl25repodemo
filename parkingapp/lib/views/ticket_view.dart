@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
@@ -13,6 +14,16 @@ class TicketView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Center(
+        child: Text(
+          'Not logged in',
+          style: TextStyle(color: Colors.red, fontSize: 18),
+        ),
+      );
+    }
+
     return BlocBuilder<TicketBloc, TicketState>(
       builder: (context, state) {
         if (state is TicketInitial) {
@@ -25,10 +36,27 @@ class TicketView extends StatelessWidget {
         }
 
         if (state is TicketError) {
+          /* if (state.message.contains("User not logged in") ||
+              state.message.contains("not have permission")) {
+                  return Center(
+                    child: Text(
+                      'Not logged in',
+                      style: TextStyle(color: Colors.red, fontSize: 18),
+                    ),
+                  );
+                } */
           return Center(child: Text('Error: ${state.message}'));
         }
 
         if (state is TicketLoaded) {
+          if (state.tickets.isEmpty) {
+            return const Center(
+              child: Text(
+                'No parking tickets available',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+              ),
+            );
+          }
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

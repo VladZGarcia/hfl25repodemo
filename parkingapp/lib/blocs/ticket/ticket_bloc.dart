@@ -10,6 +10,7 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
     on<LoadTickets>(_onLoadTickets);
     on<UpdateTicketEndTime>(_onUpdateTicketEndTime);
     on<DeleteTicket>(_onDeleteTicket);
+    on<ResetTickets>(_onResetTickets);
   }
 
   Future<void> _onLoadTickets(
@@ -47,5 +48,11 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
     } catch (e) {
       emit(TicketError(e.toString()));
     }
+  }
+  Future<void> _onResetTickets(
+    ResetTickets event,
+    Emitter<TicketState> emit,
+  ) async {
+    emit(TicketInitial());
   }
 }

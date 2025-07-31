@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkingapp/repositories/parking_repository.dart';
 import 'package:parkingapp/repositories/parking_space_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared/shared.dart';
 import 'package:uuid/uuid.dart';
 import 'parking_event.dart';
@@ -21,15 +22,24 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     on<SelectVehicleEvent>(_onSelectVehicle);
     on<UpdateParkingTimeEvent>(_onUpdateParkingTime);
     on<ResetParkingEvent>(_onResetStates);
-    /* on<AddParking>(_onAddParking);
-    on<UpdateEndTime>(_onUpdateEndTime); */
   }
 
   Future<void> _onLoadParkingSpaces(
     LoadParkingSpaces event,
     Emitter<ParkingState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, error: null));
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      emit(
+        state.copyWith(
+          error: "User not logged in",
+          isLoading: false,
+          parkingSpaces: [],
+        ),
+      );
+      return;
+    }
     try {
       final parkingSpaces = await parkingSpaceRepository.getAll();
       emit(state.copyWith(parkingSpaces: parkingSpaces, isLoading: false));
@@ -64,20 +74,9 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
         event.startTime,
         event.endTime,
       );
-
       await parkingRepository.addParking(parking);
       emit(const ParkingState());
       add(LoadParkingSpaces());
-      /* emit(
-        state.copyWith(
-          selectedParkingSpace: null,
-          selectedVehicle: null,
-          selectedIndex: -1,
-          startTime: null,
-          endTime: null,
-          cost: null,
-        ),
-      ); */
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
       print('Parking error2: ${e.toString()}');
@@ -106,7 +105,7 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
 
   void _onResetStates(ResetParkingEvent event, Emitter<ParkingState> emit) {
     emit(const ParkingState());
-    add(LoadParkingSpaces());
+    // Do NOT auto-load parking spaces after reset, only load when user is logged in
   }
 
   double _calculateCost(TimeOfDay startTime, TimeOfDay endTime, double price) {
@@ -117,32 +116,3 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     return (durationMinutes * costPerMinute).toDouble();
   }
 }
-
- /* Future<void> _onAddParking(
-    AddParking event,
-    Emitter<ParkingState> emit,
-  ) async {
-    try {
-      await parkingRepository.addParking(event.parking);
-      emit(
-        state.copyWith(
-          selectedParkingSpace: null,
-          selectedIndex: -1,
-          startTime: null,
-          endTime: null,
-          cost: null,
-        ),
-      );
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
-  } */
-  /* void _onUpdateEndTime(UpdateEndTime event, Emitter<ParkingState> emit) {
-    final price = state.selectedParkingSpace?.pricePerHour ?? 0;
-    final cost = _calculateCost(
-      state.startTime!,
-      event.endTime,
-      price.toDouble(),
-    );
-    emit(state.copyWith(endTime: event.endTime, cost: cost));
-  } */

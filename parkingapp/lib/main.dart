@@ -36,6 +36,7 @@ import 'widgets/responsive_layout.dart';
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -158,6 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isLoggedIn = false;
   bool _isSignedIn = false;
   late List<Widget> views;
+  late final StreamSubscription<User?> _authSubscription;
 
   void _toggleLoginState() {
     setState(() {
@@ -188,6 +190,28 @@ class _MyHomePageState extends State<MyHomePage> {
       VehicleView(),
       LoginView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
     ];
+
+    // Listen for auth state changes
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (!mounted) return;
+      if (user != null) {
+        // User is logged in, trigger loading lists
+        context.read<VehicleBloc>().add(LoadVehicles());
+        context.read<ParkingBloc>().add(LoadParkingSpaces());
+        context.read<TicketBloc>().add(LoadTickets());
+      } else {
+        // User is logged out, reset states
+        context.read<VehicleBloc>().add(ResetVehicles());
+        context.read<ParkingBloc>().add(ResetParkingEvent());
+        context.read<TicketBloc>().add(ResetTickets());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
   }
 
   final List<double> _minChildSizes = [0.1, 0.1, 0.1, 1.0];
@@ -327,7 +351,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       context: context,
                       builder: (context) {
                         final uuid = Uuid();
-                        
+
                         String registrationNumber = '';
                         return AlertDialog(
                           title: const Text('Add Vehicle'),
@@ -346,35 +370,38 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           actions: [
                             TextButton(
-                              onPressed: () async{
-                                final credential = FirebaseAuth.instance.currentUser;
+                              onPressed: () async {
+                                final credential =
+                                    FirebaseAuth.instance.currentUser;
                                 if (credential != null) {
                                   // Get the current user from persons collection
                                   final personRepository = PersonRepository();
-                                  final person = await personRepository.getById(credential.uid);
-                                
-                                Vehicle vehicle = Vehicle(
-                                  uuid.v4(),
-                                  registrationNumber,
-                                  Person(
-                                    id: person!.id,
-                                    name: person.name,
-                                    personId: person.personId,
-                                  ),
-                                );
-                                context.read<VehicleBloc>().add(
-                                  AddVehicle(vehicle),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Vehicle added successfully!',
+                                  final person = await personRepository.getById(
+                                    credential.uid,
+                                  );
+
+                                  Vehicle vehicle = Vehicle(
+                                    uuid.v4(),
+                                    registrationNumber,
+                                    Person(
+                                      id: person!.id,
+                                      name: person.name,
+                                      personId: person.personId,
                                     ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                                Navigator.of(context).pop();
-                              }
+                                  );
+                                  context.read<VehicleBloc>().add(
+                                    AddVehicle(vehicle),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Vehicle added successfully!',
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  Navigator.of(context).pop();
+                                }
                               },
                               child: const Text('Add'),
                             ),

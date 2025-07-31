@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
@@ -16,6 +17,16 @@ class ParkingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Center(
+        child: Text(
+          'Not logged in',
+          style: TextStyle(color: Colors.red, fontSize: 18),
+        ),
+      );
+    }
+
     return BlocBuilder<ParkingBloc, ParkingState>(
       builder: (context, state) {
         if (state.isLoading) {
@@ -26,13 +37,13 @@ class ParkingView extends StatelessWidget {
           return Center(child: Text('Error1: ${state.error}'));
         }
         if (state.parkingSpaces.isEmpty) {
-    return Center(
-      child: Text(
-        'No parking spaces available',
-        style: TextStyle(fontSize: 18, color: Colors.grey),
-      ),
-    );
-  }
+          return Center(
+            child: Text(
+              'No parking spaces available',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          );
+        }
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
