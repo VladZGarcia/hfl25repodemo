@@ -26,7 +26,7 @@ class LoginView extends StatelessWidget {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text("Login successful")));
-          onLogin();
+          
         }
       },
       child: SingleChildScrollView(

@@ -153,8 +153,6 @@ class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 3;
   late double _currentChildSize;
   bool _isExpanded = true;
-  bool _isLoggedIn = false;
-  bool _isSignedIn = false;
   late List<Widget> views;
   late final StreamSubscription<User?> _authSubscription;
 
@@ -162,46 +160,20 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<double> _initialChildSizes = [0.4, 0.4, 0.4, 1.0];
   final List<double> _maxChildSizes = [0.6, 0.6, 0.6, 1.0];
 
-  void _toggleLoginState() {
-    setState(() {
-      _isLoggedIn = !_isLoggedIn;
-    });
-    if (_isLoggedIn) {
-      context.read<VehicleBloc>().add(LoadVehicles());
-      context.read<ParkingBloc>().add(LoadParkingSpaces());
-    }
-  }
-
-  void _toggleSignupState() {
-    setState(() {
-      _isSignedIn = !_isSignedIn;
-      _isLoggedIn = false;
-      _currentIndex = 3;
-      _currentChildSize = _initialChildSizes[3];
-    });
-  }
+  bool _showSignup = false;
 
   @override
   void initState() {
     super.initState();
 
     final firebaseUser = FirebaseAuth.instance.currentUser;
-    if (firebaseUser != null) {
-      _currentIndex = 0;
-      _isLoggedIn = true;
-      _isSignedIn = true;
-    } else {
-      _currentIndex = 3;
-      _isLoggedIn = false;
-      _isSignedIn = false;
-    }
-
+    _currentIndex = firebaseUser != null ? 0 : 3;
     _currentChildSize = _initialChildSizes[_currentIndex];
     views = [
       const ParkingView(),
       const TicketView(),
       VehicleView(),
-      LoginView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
+      // index 3 will be handled separately
     ];
 
     _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
@@ -213,8 +185,6 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {
           _currentIndex = 0;
           _currentChildSize = _initialChildSizes[0];
-          _isLoggedIn = true;
-          _isSignedIn = true;
         });
       } else {
         context.read<VehicleBloc>().add(ResetVehicles());
@@ -223,8 +193,6 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {
           _currentIndex = 3;
           _currentChildSize = _initialChildSizes[3];
-          _isLoggedIn = false;
-          _isSignedIn = false;
         });
       }
     });
@@ -244,8 +212,6 @@ class _MyHomePageState extends State<MyHomePage> {
       listener: (context, state) {
         if (state.isLoggedOut) {
           setState(() {
-            _isLoggedIn = false;
-            _isSignedIn = false;
             _currentIndex = 3;
             _currentChildSize = _initialChildSizes[3];
           });
@@ -305,12 +271,24 @@ class _MyHomePageState extends State<MyHomePage> {
         _currentIndex == 3
             ? (firebaseUser != null
                 ? const SettingsPage()
-                : (_isSignedIn
-                    ? LoginView(
-                      onLogin: _toggleLoginState,
-                      onSignup: _toggleSignupState,
+                : (_showSignup
+                    ? SignupView(
+                      onSignup: () {
+                        setState(() {
+                          _showSignup = false;
+                          _currentIndex = 3; 
+                          _currentChildSize = _initialChildSizes[3];
+                        });
+                      },
                     )
-                    : SignupView(onSignup: _toggleSignupState)))
+                    : LoginView(
+                      onLogin: () {}, // handle login success in auth listener
+                      onSignup: () {
+                        setState(() {
+                          _showSignup = true;
+                        });
+                      },
+                    )))
             : views[_currentIndex];
 
     return ResponsiveLayout(
@@ -360,7 +338,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         floatingActionButton:
-            (_currentIndex == 2 && _isLoggedIn)
+            (_currentIndex == 2 && firebaseUser != null)
                 ? FloatingActionButton(
                   onPressed: () {
                     showDialog(
@@ -474,13 +452,12 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                _isLoggedIn ? Icons.settings : Icons.account_box_outlined,
+                firebaseUser != null
+                    ? Icons.settings
+                    : Icons.account_box_outlined,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
-              label:
-                  _isLoggedIn
-                      ? 'Settings'
-                      : (_isSignedIn ? 'Login' : 'Sign up'),
+              label: firebaseUser != null ? 'Settings' : 'Login',
             ),
           ],
         ),

@@ -39,7 +39,7 @@ class VehicleView extends StatelessWidget {
                 if (state.message.contains("User not logged in")) {
                   return Center(
                     child: Text(
-                      'Not logged in',
+                      'Signup or login.',
                       style: TextStyle(color: Colors.red, fontSize: 18),
                     ),
                   );

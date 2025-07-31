@@ -20,7 +20,7 @@ class ParkingView extends StatelessWidget {
     if (user == null) {
       return Center(
         child: Text(
-          'Not logged in',
+          'Signup or login.',
           style: TextStyle(color: Colors.red, fontSize: 18),
         ),
       );
@@ -224,7 +224,6 @@ class ParkingView extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
-                        context.read<ParkingBloc>().add(ResetParkingEvent());
                         Navigator.of(context).pop();
                       },
                       child: const Text('Cancel'),

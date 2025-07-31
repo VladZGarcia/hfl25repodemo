@@ -18,7 +18,7 @@ class TicketView extends StatelessWidget {
     if (user == null) {
       return Center(
         child: Text(
-          'Not logged in',
+          'Signup or login.',
           style: TextStyle(color: Colors.red, fontSize: 18),
         ),
       );
