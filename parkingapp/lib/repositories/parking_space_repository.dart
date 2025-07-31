@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 class ParkingSpaceRepository {
@@ -16,17 +14,6 @@ class ParkingSpaceRepository {
   List<Parkingspace> parkingSpaces = [];
 
   Future<Parkingspace> addParkingSpace(Parkingspace parkingspace) async {
-    /* final url = Uri.parse('$baseUrl/parking_spaces');
-
-    http.Response response = await http.post(url,
-        body: jsonEncode(parkingspace.toJson()), 
-        headers: {
-      'Content-Type': 'application/json',
-    });
-    final json = await jsonDecode(response.body);
-    
-    return Parkingspace.fromJson(json); */
-    // add parking space to Firestore
     final credential = FirebaseAuth.instance.currentUser;
     if (credential == null) {
       throw Exception("User not logged in");

@@ -16,22 +16,10 @@ class VehicleRepository {
   List<Vehicle> vehicles = [];
 
   Future<Vehicle> addVehicle(Vehicle vehicle) async {
-    /* final url = Uri.parse('$baseUrl/vehicles');
-
-    Response response = await http.post(
-      url,
-      body: jsonEncode(vehicle.toJson()),
-      headers: {'Content-Type': 'application/json'},
-    );
-    final json = await jsonDecode(response.body);
-    return Vehicle.fromJson(json); */
-
-    // add vehicle to Firestore under the logged-in user
-    
-      await FirebaseFirestore.instance
-          .collection('persons')
-          .doc(credential?.uid)
-          .collection('vehicles')
+    await FirebaseFirestore.instance
+        .collection('persons')
+        .doc(credential?.uid)
+        .collection('vehicles')
           .doc(vehicle.id)
           .set(vehicle.toJson());
 
@@ -39,15 +27,6 @@ class VehicleRepository {
   }
 
   Future<List<Vehicle>> getAll() async {
-    /* final url = Uri.parse('$baseUrl/vehicles');
-    Response response = await http.get(
-      url,
-      headers: {'Content-Type': 'application/json'},
-    );
-    final json = await jsonDecode(response.body); // decoded json list
-    final List<Vehicle> vehicles =
-        (json as List<dynamic>).map((e) => Vehicle.fromJson(e)).toList(); */
-    // get all vehicles for the logged-in user from Firestore
     if (credential == null) {
       throw Exception("User not logged in");
     }
@@ -64,22 +43,6 @@ class VehicleRepository {
   }
 
   Future<Vehicle?> getById(String id) async {
-    /* final url = Uri.parse('$baseUrl/vehicles/$regNr');
-    Response response = await http.get(
-      url,
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      if (response.body.trim() == 'null') {
-        return null;
-      }
-      final json = jsonDecode(response.body); // decoded json
-      return Vehicle.fromJson(json);
-    } else {
-      return null;
-    } */
-    // get vehicle with regNr from a person from Firestore
     final document =
         await FirebaseFirestore.instance
             .collection('persons')
@@ -100,16 +63,6 @@ class VehicleRepository {
   }
 
   Future<Vehicle> update(Vehicle vehicle) async {
-    /* final url = Uri.parse('$baseUrl/vehicles/${vehicle.id}');
-    Response response = await http.put(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(vehicle.toJson()),
-    );
-    final json = await jsonDecode(response.body); // decoded json
-    return Vehicle.fromJson(json); */
-    // update vehicle in Firestore
-    
       await FirebaseFirestore.instance
           .collection('persons')
           .doc(credential?.uid)
@@ -121,19 +74,6 @@ class VehicleRepository {
   }
 
   Future<Vehicle?> delete(String id) async {
-    /* final url = Uri.parse('$baseUrl/vehicles/$id');
-    Response response = await http.delete(
-      url,
-      headers: {'Content-Type': 'application/json'},
-    );
-    if (response.statusCode != 200) {
-      if (response.body.trim() == 'null') {
-        return null;
-      }
-    }
-    final json = await jsonDecode(response.body); // decoded json
-    return Vehicle.fromJson(json); */
-    // delete vehicle from Firestore
     
     await FirebaseFirestore.instance
         .collection('persons')
@@ -141,6 +81,6 @@ class VehicleRepository {
         .collection('vehicles')
         .doc(id)
         .delete();
-    return null; // No return value needed, just delete
+    return null; 
   }
 }

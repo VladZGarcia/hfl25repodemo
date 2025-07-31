@@ -23,12 +23,6 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
       return;
     }
     try {
-      /* final persons = await personRepository.getAll();
-      final emailExists = persons.any((person) => person.email == event.email);
-      if (emailExists) {
-        emit(const SignupFailure("Email already exists"));
-        return;
-      } */
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: event.email,
@@ -47,7 +41,7 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
               'email': event.email,
               'personId': 1234567890,
             });
-        // add to local database
+        // add personto firestore
         await personRepository.addPerson(
           Person(
             id: credential.user!.uid,
@@ -58,9 +52,7 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
             personId: 1234567890,
           ),
         );
-        //logout after signup
-        // This is optional
-        await FirebaseAuth.instance.signOut();
+        
         emit(SignupSuccess());
       }
     } on FirebaseAuthException catch (e) {

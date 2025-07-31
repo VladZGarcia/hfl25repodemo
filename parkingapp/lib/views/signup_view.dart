@@ -19,25 +19,29 @@ class SignupView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<SignupBloc, SignupState>(
       listener: (context, state) {
+        if (state is SignupLoading) {
+          // Only show dialog if one is not already open
+          if (ModalRoute.of(context)?.isCurrent ?? true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Signing up..."),duration: Duration(seconds: 1)),
+            );
+          }
+        } else {
+          // Try to pop the dialog if it's open
+          if (Navigator.of(context, rootNavigator: true).canPop()) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
+        }
         if (state is SignupFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
-          Navigator.of(context, rootNavigator: true).pop();
         }
         if (state is SignupSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Account created successfully")),
           );
-          Navigator.of(context, rootNavigator: true).pop();
           onSignup();
-        }
-        if (state is SignupLoading) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => const Center(child: CircularProgressIndicator()),
-          );
         }
       },
       child: BlocBuilder<SignupBloc, SignupState>(
@@ -225,7 +229,6 @@ class SignupView extends StatelessWidget {
                       TextButton(
                         onPressed: () {
                           onSignup();
-
                           // Handle login action
                         },
                         child: const Text(

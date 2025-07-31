@@ -61,20 +61,18 @@ void main() async {
               (context) => VehicleBloc(
                 vehicleRepository: VehicleRepository(),
                 parkingRepository: ParkingRepository(),
-              )..add(LoadVehicles()),
+              ),
         ),
         BlocProvider(
           create:
               (context) => ParkingBloc(
                 parkingRepository: ParkingRepository(),
                 parkingSpaceRepository: ParkingSpaceRepository(),
-              )..add(LoadParkingSpaces()),
+              ),
         ),
         BlocProvider(
           create:
-              (context) =>
-                  TicketBloc(parkingRepository: ParkingRepository())
-                    ..add(LoadTickets()),
+              (context) => TicketBloc(parkingRepository: ParkingRepository()),
         ),
         BlocProvider(
           create: (context) => SignupBloc(personRepository: PersonRepository()),
@@ -144,9 +142,8 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
   final String title;
+  const MyHomePage({super.key, required this.title});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -161,11 +158,14 @@ class _MyHomePageState extends State<MyHomePage> {
   late List<Widget> views;
   late final StreamSubscription<User?> _authSubscription;
 
+  final List<double> _minChildSizes = [0.1, 0.1, 0.1, 1.0];
+  final List<double> _initialChildSizes = [0.4, 0.4, 0.4, 1.0];
+  final List<double> _maxChildSizes = [0.6, 0.6, 0.6, 1.0];
+
   void _toggleLoginState() {
     setState(() {
       _isLoggedIn = !_isLoggedIn;
     });
-    // Refresh vehicles after login
     if (_isLoggedIn) {
       context.read<VehicleBloc>().add(LoadVehicles());
       context.read<ParkingBloc>().add(LoadParkingSpaces());
@@ -177,12 +177,25 @@ class _MyHomePageState extends State<MyHomePage> {
       _isSignedIn = !_isSignedIn;
       _isLoggedIn = false;
       _currentIndex = 3;
+      _currentChildSize = _initialChildSizes[3];
     });
   }
 
   @override
   void initState() {
     super.initState();
+
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      _currentIndex = 0;
+      _isLoggedIn = true;
+      _isSignedIn = true;
+    } else {
+      _currentIndex = 3;
+      _isLoggedIn = false;
+      _isSignedIn = false;
+    }
+
     _currentChildSize = _initialChildSizes[_currentIndex];
     views = [
       const ParkingView(),
@@ -191,19 +204,28 @@ class _MyHomePageState extends State<MyHomePage> {
       LoginView(onLogin: _toggleLoginState, onSignup: _toggleSignupState),
     ];
 
-    // Listen for auth state changes
     _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (!mounted) return;
       if (user != null) {
-        // User is logged in, trigger loading lists
         context.read<VehicleBloc>().add(LoadVehicles());
         context.read<ParkingBloc>().add(LoadParkingSpaces());
         context.read<TicketBloc>().add(LoadTickets());
+        setState(() {
+          _currentIndex = 0;
+          _currentChildSize = _initialChildSizes[0];
+          _isLoggedIn = true;
+          _isSignedIn = true;
+        });
       } else {
-        // User is logged out, reset states
         context.read<VehicleBloc>().add(ResetVehicles());
         context.read<ParkingBloc>().add(ResetParkingEvent());
         context.read<TicketBloc>().add(ResetTickets());
+        setState(() {
+          _currentIndex = 3;
+          _currentChildSize = _initialChildSizes[3];
+          _isLoggedIn = false;
+          _isSignedIn = false;
+        });
       }
     });
   }
@@ -214,13 +236,8 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  final List<double> _minChildSizes = [0.1, 0.1, 0.1, 1.0];
-  final List<double> _initialChildSizes = [0.4, 0.4, 0.5, 1.0];
-  final List<double> _maxChildSizes = [0.5, 0.5, 0.6, 1.0];
-
   @override
   Widget build(BuildContext context) {
-    // Listen for logout in SettingsBloc and update _isLoggedIn/_isSignedIn
     return BlocListener<SettingsBloc, SettingsState>(
       listenWhen:
           (previous, current) => previous.isLoggedOut != current.isLoggedOut,
@@ -230,10 +247,9 @@ class _MyHomePageState extends State<MyHomePage> {
             _isLoggedIn = false;
             _isSignedIn = false;
             _currentIndex = 3;
+            _currentChildSize = _initialChildSizes[3];
           });
-          context.read<SettingsBloc>().add(
-            ToggleThemeEvent(false),
-          ); // Reset to light mode
+          context.read<SettingsBloc>().add(ToggleThemeEvent(false));
           context.read<SettingsBloc>().add(ResetLogoutEvent());
           context.read<VehicleBloc>().add(ResetVehicles());
           context.read<ParkingBloc>().add(ResetParkingEvent());
@@ -244,7 +260,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildMainContent(BuildContext context) {
-    // Get theme mode from BLoC
     final isDark = context.select<SettingsBloc, bool>(
       (bloc) => bloc.state.themeMode == ThemeMode.dark,
     );
@@ -263,7 +278,6 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          /* subdomains: isDark ? ['a', 'b', 'c', 'd'] : [], */
           tileProvider: CancellableNetworkTileProvider(),
           tileBuilder: isDark ? darkModeTileBuilder : null,
           userAgentPackageName: 'com.parkingapp.flutter',
@@ -285,9 +299,11 @@ class _MyHomePageState extends State<MyHomePage> {
       ],
     );
 
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+
     final contentWidget =
         _currentIndex == 3
-            ? (_isLoggedIn
+            ? (firebaseUser != null
                 ? const SettingsPage()
                 : (_isSignedIn
                     ? LoginView(
@@ -351,7 +367,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       context: context,
                       builder: (context) {
                         final uuid = Uuid();
-
                         String registrationNumber = '';
                         return AlertDialog(
                           title: const Text('Add Vehicle'),
@@ -374,12 +389,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                 final credential =
                                     FirebaseAuth.instance.currentUser;
                                 if (credential != null) {
-                                  // Get the current user from persons collection
                                   final personRepository = PersonRepository();
                                   final person = await personRepository.getById(
                                     credential.uid,
                                   );
-
                                   Vehicle vehicle = Vehicle(
                                     uuid.v4(),
                                     registrationNumber,

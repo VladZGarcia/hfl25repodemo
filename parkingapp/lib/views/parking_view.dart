@@ -10,7 +10,6 @@ import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_state.dart';
 import 'package:parkingapp/utils/parking_utils.dart';
-import 'package:uuid/uuid.dart';
 
 class ParkingView extends StatelessWidget {
   const ParkingView({super.key});
