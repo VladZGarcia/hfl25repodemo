@@ -9,6 +9,7 @@ import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_state.dart';
 import 'package:parkingapp/utils/parking_utils.dart';
+import 'package:uuid/uuid.dart';
 
 class ParkingView extends StatelessWidget {
   const ParkingView({super.key});
@@ -22,8 +23,16 @@ class ParkingView extends StatelessWidget {
         }
 
         if (state.error != null) {
-          return Center(child: Text('Error: ${state.error}'));
+          return Center(child: Text('Error1: ${state.error}'));
         }
+        if (state.parkingSpaces.isEmpty) {
+    return Center(
+      child: Text(
+        'No parking spaces available',
+        style: TextStyle(fontSize: 18, color: Colors.grey),
+      ),
+    );
+  }
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,7 +105,7 @@ class ParkingView extends StatelessWidget {
             }
 
             if (vehicleState is VehicleError) {
-              return Center(child: Text('Error: ${vehicleState.message}'));
+              return Center(child: Text('Error2: ${vehicleState.message}'));
             }
             return BlocBuilder<ParkingBloc, ParkingState>(
               builder: (context, parkingState) {
@@ -106,7 +115,10 @@ class ParkingView extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DropdownButton<String>(
-                        value: parkingState.selectedVehicle?.id,
+                        value:
+                            (parkingState.selectedVehicle != null)
+                                ? parkingState.selectedVehicle!.id
+                                : null,
                         hint: const Text('Select a vehicle'),
                         onChanged: (String? newVehicleId) {
                           if (newVehicleId != null &&

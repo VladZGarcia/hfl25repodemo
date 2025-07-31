@@ -5,7 +5,6 @@ import 'signup_event.dart';
 import 'signup_state.dart';
 import 'package:parkingapp/repositories/person_repository.dart';
 import 'package:shared/shared.dart';
-import 'package:uuid/uuid.dart';
 
 class SignupBloc extends Bloc<SignupEvent, SignupState> {
   final PersonRepository personRepository;

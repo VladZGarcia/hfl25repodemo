@@ -1,11 +1,7 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart';
 import 'package:shared/shared.dart';
-import 'package:http/http.dart' as http;
 import 'dart:io' show Platform;
 
 class VehicleRepository {
@@ -38,7 +34,7 @@ class VehicleRepository {
           .collection('vehicles')
           .doc(vehicle.id)
           .set(vehicle.toJson());
-    
+
     return vehicle;
   }
 

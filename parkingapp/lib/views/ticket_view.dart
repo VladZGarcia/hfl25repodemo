@@ -175,7 +175,7 @@ class TicketListItem extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () async {
-                    await ParkingRepository().delete(ticket.id);
+                    context.read<TicketBloc>().add(DeleteTicket(ticket.id));
                     setState(() {
                       // Show a success message
                       ScaffoldMessenger.of(context).showSnackBar(

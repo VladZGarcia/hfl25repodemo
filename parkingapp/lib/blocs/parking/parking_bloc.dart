@@ -35,6 +35,7 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
       emit(state.copyWith(parkingSpaces: parkingSpaces, isLoading: false));
     } catch (e) {
       emit(state.copyWith(error: e.toString(), isLoading: false));
+      print('Parking error1: ${e.toString()}');
     }
   }
 
@@ -79,9 +80,10 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
       ); */
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
+      print('Parking error2: ${e.toString()}');
     }
   }
- 
+
   void _onUpdateParkingTime(
     UpdateParkingTimeEvent event,
     Emitter<ParkingState> emit,

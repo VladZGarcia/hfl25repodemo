@@ -1,10 +1,7 @@
-import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart';
 import 'package:shared/shared.dart';
-import 'package:http/http.dart' as http;
 
 class PersonRepository {
   String get baseUrl {
