@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:parkingapp/blocs/login/login_bloc.dart';
@@ -25,7 +26,7 @@ import 'package:parkingapp/views/settings_view.dart';
 import 'package:parkingapp/views/signup_view.dart';
 import 'package:parkingapp/views/ticket_view.dart';
 import 'package:parkingapp/views/vehicle_view.dart';
-import 'package:shared/shared.dart';
+import 'package:shared/shared.dart' as shared;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
@@ -37,9 +38,65 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'dart:async';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
+
+Future<void> _configureLocalTimeZone() async {
+  if (kIsWeb || Platform.isLinux) {
+    return;
+  }
+  tz.initializeTimeZones();
+  if (Platform.isWindows) {
+    return;
+  }
+  try {
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
+  } catch (e) {
+    tz.setLocalLocation(tz.getLocation('Europe/Stockholm')); // or your default
+  }
+}
+
+Future<FlutterLocalNotificationsPlugin> initializeNotifications() async {
+  var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  var initializationSettingsAndroid = const AndroidInitializationSettings(
+    /* '@mipmap/ic_launcher', */
+    '@drawable/parked_car_png',
+  ); // Your app icon, sync in pubspec.yaml
+
+  var initializationSettingsDarwin = const DarwinInitializationSettings();
+  var linuxInitializationSettings = const LinuxInitializationSettings(
+    defaultActionName:
+        'Open notification', // Action name when notification is clicked
+  );
+  const WindowsInitializationSettings
+  initializationSettingsWindows = WindowsInitializationSettings(
+    appName: 'parkingapp', // Your app name, sync msix installer in pubspec
+    appUserModelId:
+        'Com.Example.App', // app name, sync msix intaller in pubspec
+    guid:
+        'beb011a2-0147-4f9d-9967-e2eef573d39e', // Unique GUID for your app, sync msix installer in pubspec
+  );
+  // TODO: Generate your own: https://www.guidgenerator.com/ and sync in msix installer in pubspec
+  var initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsDarwin,
+    macOS: initializationSettingsDarwin,
+    linux: linuxInitializationSettings,
+    windows: initializationSettingsWindows,
+  );
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  return flutterLocalNotificationsPlugin;
+}
+
+late final FlutterLocalNotificationsPlugin notificationsPlugin;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await _configureLocalTimeZone();
+  notificationsPlugin = await initializeNotifications();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
@@ -52,6 +109,38 @@ void main() async {
     setWindowMinSize(const Size(850, 600));
     setWindowMaxSize(Size.infinite);
   }
+
+  await notificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.requestNotificationsPermission(); // Changed from requestPermission
+
+  final channel = AndroidNotificationChannel(
+    'parking_reminder_channel',
+    'Parking Reminders',
+    description: 'Notifications for parking session end times',
+    importance: Importance.max,
+  );
+
+  await notificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(channel);
+
+  final testChannel = AndroidNotificationChannel(
+    'emulator_test_channel',
+    'Emulator Tests',
+    description: 'For testing notifications on emulator',
+    importance: Importance.max,
+  );
+
+  await notificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(testChannel);
 
   runApp(
     MultiBlocProvider(
@@ -276,7 +365,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       onSignup: () {
                         setState(() {
                           _showSignup = false;
-                          _currentIndex = 3; 
+                          _currentIndex = 3;
                           _currentChildSize = _initialChildSizes[3];
                         });
                       },
@@ -371,10 +460,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                   final person = await personRepository.getById(
                                     credential.uid,
                                   );
-                                  Vehicle vehicle = Vehicle(
+                                  shared.Vehicle vehicle = shared.Vehicle(
                                     uuid.v4(),
                                     registrationNumber,
-                                    Person(
+                                    shared.Person(
                                       id: person!.id,
                                       name: person.name,
                                       personId: person.personId,

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parkingapp/repositories/notification_repository.dart';
 import 'package:parkingapp/repositories/parking_repository.dart';
 import 'ticket_event.dart';
 import 'ticket_state.dart';
@@ -43,6 +44,7 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
     Emitter<TicketState> emit,
   ) async {
     try {
+      await cancelParkedNotifications(event.ticketId);
       await parkingRepository.delete(event.ticketId);
       add(LoadTickets());
     } catch (e) {

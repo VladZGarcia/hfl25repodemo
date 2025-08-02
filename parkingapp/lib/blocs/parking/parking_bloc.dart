@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:parkingapp/main.dart';
+import 'package:parkingapp/repositories/notification_repository.dart';
 import 'package:parkingapp/repositories/parking_repository.dart';
 import 'package:parkingapp/repositories/parking_space_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -74,6 +77,73 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
         event.startTime,
         event.endTime,
       );
+
+      // Only schedule notification if endTime is after startTime
+      if (event.endTime != null) {
+        final startMinutes = event.startTime.hour * 60 + event.startTime.minute;
+        final endMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
+        if (endMinutes > startMinutes) {
+          // Convert TimeOfDay to DateTime for today
+          final now = DateTime.now();
+          var scheduledTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            event.endTime!.hour,
+            event.endTime!.minute,
+          );
+
+          // If the scheduled time is in the past (like if user picks a time earlier today),
+          // add one day to schedule it for tomorrow
+          if (scheduledTime.isBefore(now)) {
+            scheduledTime = scheduledTime.add(const Duration(days: 1));
+          }
+
+          // Add a 5-minute warning before end time
+          //final reminderTime = scheduledTime.subtract(
+          //  const Duration(minutes: 1),
+          //);
+
+          // In your ParkingBloc, temporarily modify the reminder time for testing:
+          final reminderTime = DateTime.now().add(const Duration(seconds: 15));
+
+          print('Scheduling notification for parking ${parking.id}');
+          print('Current time: ${DateTime.now()}');
+          print('Reminder time: $reminderTime');
+
+          await scheduleParkedNotifications(
+            vehicleRegistration: event.vehicle.registrationNumber,
+            parkingSpace: event.parkingSpace.adress,
+            startTime: event.startTime,
+            endTime: event.endTime!,
+            parkingId: parking.id,
+          );
+          /* await realDeviceNotificationDemo(
+            vehicleRegistration: event.vehicle.registrationNumber,
+            parkingSpace: event.parkingSpace.adress,
+            parkingId: parking.id,
+          ); */
+          /* await testEmulatorNotifications(); */
+          /* await emulatorSequentialNotifications(); */
+
+          // Add immediate test notification
+          /* await notificationsPlugin.show(
+            999, // different ID
+            'Immediate Test 1',
+            'This should appear right away',
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'test_channel',
+                'Test Channel',
+                channelDescription: 'For testing notifications',
+                importance: Importance.max,
+                priority: Priority.high,
+              ),
+            ),
+          ); */
+        }
+      }
+
       await parkingRepository.addParking(parking);
       emit(const ParkingState());
       add(LoadParkingSpaces());
