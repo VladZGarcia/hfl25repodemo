@@ -4,53 +4,6 @@ import 'package:parkingapp/main.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-Future<void> requestNotificationPermission() async {
-  if (Platform.isAndroid) {
-    final status = await Permission.notification.request();
-    print('Notification permission status: $status');
-
-    // On Android 12 and above, also request exact alarm permission
-    if (await Permission.scheduleExactAlarm.shouldShowRequestRationale) {
-      final alarmStatus = await Permission.scheduleExactAlarm.request();
-      print('Exact alarm permission status: $alarmStatus');
-    }
-
-    // Always request exact alarm permission explicitly
-    try {
-      await Permission.scheduleExactAlarm.request();
-      print('Exact alarm permission requested');
-    } catch (e) {
-      print('Error requesting exact alarm permission: $e');
-    }
-  }
-}
-
-Future<void> requestPermissions() async {
-  if (Platform.isIOS) {
-    final impl =
-        notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin
-            >();
-    await impl?.requestPermissions(alert: true, badge: true, sound: true);
-  }
-  if (Platform.isMacOS) {
-    final impl =
-        notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              MacOSFlutterLocalNotificationsPlugin
-            >();
-    await impl?.requestPermissions(alert: true, badge: true, sound: true);
-  }
-  if (Platform.isAndroid) {
-    final impl =
-        notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >();
-    await impl?.requestNotificationsPermission();
-  }
-}
 
 Future<void> scheduleNotification({
   required String title,
@@ -107,7 +60,79 @@ Future<void> cancelNotification(int id) async {
   await notificationsPlugin.cancel(id);
 }
 
-Future<void> androidNotification() async {
+Future<void> cancelParkedNotifications(String parkingId) async {
+  try {
+    // Convert parkingId to a consistent integer hash for notification ID
+    final baseId = parkingId.hashCode;
+
+    // Cancel main end notification
+    await cancelNotification(baseId);
+
+    // Cancel all hourly/minute reminders (assuming max 60)
+    for (int i = 1; i <= 60; i++) {
+      await cancelNotification(baseId + i);
+    }
+
+    // Cancel any other special notifications
+    await cancelNotification(9000); // "Parking Started"
+    await cancelNotification(9001); // "Parking Update"
+    await cancelNotification(9002); // "Parking Ending Soon"
+
+    print('Canceled all notifications for parking $parkingId');
+  } catch (e) {
+    print('Error canceling notifications: $e');
+  }
+}
+
+
+Future<void> requestNotificationPermission() async {
+  if (Platform.isAndroid) {
+    final status = await Permission.notification.request();
+    print('Notification permission status: $status');
+
+    // On Android 12 and above, also request exact alarm permission
+    if (await Permission.scheduleExactAlarm.shouldShowRequestRationale) {
+      final alarmStatus = await Permission.scheduleExactAlarm.request();
+      print('Exact alarm permission status: $alarmStatus');
+    }
+
+    // Always request exact alarm permission explicitly
+    try {
+      await Permission.scheduleExactAlarm.request();
+      print('Exact alarm permission requested');
+    } catch (e) {
+      print('Error requesting exact alarm permission: $e');
+    }
+  }
+}
+
+Future<void> requestPermissions() async {
+  if (Platform.isIOS) {
+    final impl =
+        notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >();
+    await impl?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+  if (Platform.isMacOS) {
+    final impl =
+        notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin
+            >();
+    await impl?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+  if (Platform.isAndroid) {
+    final impl =
+        notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+    await impl?.requestNotificationsPermission();
+  }
+}
+/* Future<void> androidNotification() async {
   try {
     await requestNotificationPermission();
 
@@ -161,7 +186,7 @@ Future<void> androidNotification() async {
     print('Error scheduling notification: $e');
     print('Stack trace: $stack');
   }
-}
+} */
 
 Future<void> scheduleParkedNotifications({
   required String vehicleRegistration,
@@ -232,7 +257,7 @@ Future<void> scheduleParkedNotifications({
     }
 
     // Add at the end of scheduleParkedNotifications method
-    await notificationsPlugin.show(
+    /* await notificationsPlugin.show(
       99999,
       "Debug: Notifications Scheduled",
       "Scheduled ${remindersToSchedule} minute reminders. Next one at ${DateTime.now().add(Duration(minutes: 1)).toString().substring(11, 16)}",
@@ -245,7 +270,7 @@ Future<void> scheduleParkedNotifications({
           priority: Priority.high,
         ),
       ),
-    );
+    ); */
 
     // For immediate testing with 5, 10, and 15 second intervals
     final now = DateTime.now();
@@ -266,7 +291,7 @@ Future<void> scheduleParkedNotifications({
       final veryShortTime = timeNow.add(
         Duration(seconds: i * 3),
       ); // 3, 6, 9 seconds
-      
+
       await notificationsPlugin.zonedSchedule(
         77770 + i,
         "Emulator Test $i",
@@ -292,7 +317,7 @@ Future<void> scheduleParkedNotifications({
   }
 }
 
-Future<void> testEmulatorNotifications() async {
+/* Future<void> testEmulatorNotifications() async {
   try {
     // 1. First show immediate notification
     await notificationsPlugin.show(
@@ -344,9 +369,9 @@ Future<void> testEmulatorNotifications() async {
     print("Error in test notification: $e");
     print(stack);
   }
-}
+} */
 
-Future<void> emulatorSequentialNotifications() async {
+/* Future<void> emulatorSequentialNotifications() async {
   try {
     // First immediate notification
     await notificationsPlugin.show(
@@ -425,10 +450,10 @@ Future<void> emulatorSequentialNotifications() async {
   } catch (e) {
     print("Error in emulator sequential notifications: $e");
   }
-}
+} */
 
 // Add this new function specifically for real device testing
-Future<void> realDeviceNotificationDemo({
+/* Future<void> realDeviceNotificationDemo({
   required String vehicleRegistration,
   required String parkingSpace,
   required String parkingId,
@@ -487,28 +512,74 @@ Future<void> realDeviceNotificationDemo({
   } catch (e) {
     print("Error in real device notifications: $e");
   }
-}
+} */
 
-Future<void> cancelParkedNotifications(String parkingId) async {
+Future<void> scheduleOngoingParkingNotifications({
+  required String vehicleRegistration,
+  required String parkingSpace,
+  required DateTime startTime,
+  required String parkingId,
+}) async {
   try {
     // Convert parkingId to a consistent integer hash for notification ID
     final baseId = parkingId.hashCode;
 
-    // Cancel main end notification
-    await cancelNotification(baseId);
+    // Schedule notifications every 30 minutes for 12 hours
+    // (Adjust the max duration as needed)
+    const int reminderIntervalMinutes = 1;
+    const int maxDurationHours = 12;
+    final int maxReminders = (maxDurationHours * 60) ~/ reminderIntervalMinutes;
 
-    // Cancel all hourly/minute reminders (assuming max 60)
-    for (int i = 1; i <= 60; i++) {
-      await cancelNotification(baseId + i);
+    print('Scheduling ongoing parking notifications for $vehicleRegistration');
+
+    // First immediate confirmation
+    await notificationsPlugin.show(
+      baseId,
+      "Ongoing Parking Started",
+      "Parking started for $vehicleRegistration at $parkingSpace. You'll receive periodic reminders.",
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'parking_reminder_channel',
+          'Parking Reminders',
+          channelDescription: 'For parking notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+    );
+
+    // Schedule periodic reminders
+    for (int i = 1; i <= maxReminders; i++) {
+      final reminderTime = startTime.add(
+        Duration(minutes: i * reminderIntervalMinutes),
+      );
+      final totalMinutes = i * reminderIntervalMinutes;
+      final hours = totalMinutes ~/ 60;
+      final minutes = totalMinutes % 60;
+
+      // Format time message
+      String timeMessage;
+      if (hours > 0) {
+        timeMessage = "$hours hour${hours > 1 ? 's' : ''}";
+        if (minutes > 0) {
+          timeMessage += " and $minutes minute${minutes > 1 ? 's' : ''}";
+        }
+      } else {
+        timeMessage = "$minutes minute${minutes > 1 ? 's' : ''}";
+      }
+
+      await scheduleNotification(
+        title: 'Ongoing Parking Reminder',
+        content:
+            'Your parking for $vehicleRegistration at $parkingSpace has been active for $timeMessage.',
+        deliveryTime: reminderTime,
+        id: baseId + i,
+      );
+
+      print('Ongoing reminder $i scheduled for $reminderTime');
     }
-
-    // Cancel any other special notifications
-    await cancelNotification(9000); // "Parking Started"
-    await cancelNotification(9001); // "Parking Update"
-    await cancelNotification(9002); // "Parking Ending Soon"
-
-    print('Canceled all notifications for parking $parkingId');
-  } catch (e) {
-    print('Error canceling notifications: $e');
+  } catch (e, stack) {
+    print('Error scheduling ongoing parking notifications: $e');
+    print('Stack trace: $stack');
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
+import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/main.dart';
 import 'package:parkingapp/repositories/notification_repository.dart';
 import 'package:parkingapp/repositories/parking_repository.dart';
@@ -78,8 +80,16 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
         event.endTime,
       );
 
-      // Only schedule notification if endTime is after startTime
-      if (event.endTime != null) {
+      // If endTime is null, this is an ongoing parking - schedule periodic reminders
+      if (event.endTime == null) {
+        await scheduleOngoingParkingNotifications(
+          vehicleRegistration: event.vehicle.registrationNumber,
+          parkingSpace: event.parkingSpace.adress,
+          startTime: event.startTime,
+          parkingId: parking.id,
+        );
+      } else {
+        // Existing code for parking with end time
         final startMinutes = event.startTime.hour * 60 + event.startTime.minute;
         final endMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
         if (endMinutes > startMinutes) {
@@ -105,11 +115,11 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
           //);
 
           // In your ParkingBloc, temporarily modify the reminder time for testing:
-          final reminderTime = DateTime.now().add(const Duration(seconds: 15));
+          /* final reminderTime = DateTime.now().add(const Duration(seconds: 15));
 
           print('Scheduling notification for parking ${parking.id}');
           print('Current time: ${DateTime.now()}');
-          print('Reminder time: $reminderTime');
+          print('Reminder time: $reminderTime'); */
 
           await scheduleParkedNotifications(
             vehicleRegistration: event.vehicle.registrationNumber,
@@ -118,29 +128,6 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
             endTime: event.endTime!,
             parkingId: parking.id,
           );
-          /* await realDeviceNotificationDemo(
-            vehicleRegistration: event.vehicle.registrationNumber,
-            parkingSpace: event.parkingSpace.adress,
-            parkingId: parking.id,
-          ); */
-          /* await testEmulatorNotifications(); */
-          /* await emulatorSequentialNotifications(); */
-
-          // Add immediate test notification
-          /* await notificationsPlugin.show(
-            999, // different ID
-            'Immediate Test 1',
-            'This should appear right away',
-            const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'test_channel',
-                'Test Channel',
-                channelDescription: 'For testing notifications',
-                importance: Importance.max,
-                priority: Priority.high,
-              ),
-            ),
-          ); */
         }
       }
 

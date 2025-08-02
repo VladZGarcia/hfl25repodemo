@@ -62,7 +62,7 @@ Future<FlutterLocalNotificationsPlugin> initializeNotifications() async {
   var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   var initializationSettingsAndroid = const AndroidInitializationSettings(
     /* '@mipmap/ic_launcher', */
-    '@drawable/parked_car_png',
+    '@mipmap/parked_car',
   ); // Your app icon, sync in pubspec.yaml
 
   var initializationSettingsDarwin = const DarwinInitializationSettings();

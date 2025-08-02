@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parkingapp/blocs/parking/parking_bloc.dart';
+import 'package:parkingapp/blocs/parking/parking_state.dart';
 import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/blocs/ticket/ticket_state.dart';
@@ -24,19 +26,28 @@ class TicketView extends StatelessWidget {
       );
     }
 
-    return BlocBuilder<TicketBloc, TicketState>(
-      builder: (context, state) {
-        if (state is TicketInitial) {
-          context.read<TicketBloc>().add(LoadTickets());
-          return const Center(child: CircularProgressIndicator());
-        }
+    return BlocListener<ParkingBloc, ParkingState>(
+      listenWhen:
+          (previous, current) =>
+              previous.isLoading && !current.isLoading && current.error == null,
+      listener: (context, state) {
+        // Reload tickets when parking state indicates a successful addition
+        context.read<TicketBloc>().add(LoadTickets());
+      },
 
-        if (state is TicketLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      child: BlocBuilder<TicketBloc, TicketState>(
+        builder: (context, state) {
+          if (state is TicketInitial) {
+            context.read<TicketBloc>().add(LoadTickets());
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (state is TicketError) {
-          /* if (state.message.contains("User not logged in") ||
+          if (state is TicketLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is TicketError) {
+            /* if (state.message.contains("User not logged in") ||
               state.message.contains("not have permission")) {
                   return Center(
                     child: Text(
@@ -45,46 +56,50 @@ class TicketView extends StatelessWidget {
                     ),
                   );
                 } */
-          return Center(child: Text('Error: ${state.message}'));
-        }
+            return Center(child: Text('Error: ${state.message}'));
+          }
 
-        if (state is TicketLoaded) {
-          if (state.tickets.isEmpty) {
-            return const Center(
-              child: Text(
-                'No parking tickets available',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+          if (state is TicketLoaded) {
+            if (state.tickets.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No parking tickets available',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              );
+            }
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'Tickets',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.tickets.length,
+                    itemBuilder: (context, index) {
+                      final ticket = state.tickets[index];
+                      return TicketListItem(ticket: ticket);
+                    },
+                  ),
+                ],
               ),
             );
           }
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'Tickets',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: state.tickets.length,
-                  itemBuilder: (context, index) {
-                    final ticket = state.tickets[index];
-                    return TicketListItem(ticket: ticket);
-                  },
-                ),
-              ],
-            ),
-          );
-        }
 
-        return const Center(child: Text('No tickets available'));
-      },
+          return const Center(child: Text('No tickets available'));
+        },
+      ),
     );
   }
 }
@@ -203,12 +218,14 @@ class TicketListItem extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () async {
+
                     context.read<TicketBloc>().add(DeleteTicket(ticket.id));
+                    
                     setState(() {
                       // Show a success message
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Ticket deleted successfully!'),
+                          content: Text('Ticket and notification deleted successfully!'),
                           duration: Duration(seconds: 2),
                         ),
                       );

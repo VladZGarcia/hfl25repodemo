@@ -32,7 +32,28 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
     Emitter<TicketState> emit,
   ) async {
     try {
+      // First, cancel all existing notifications for this ticket
+      await cancelParkedNotifications(event.ticket.id);
+
+      // Update the ticket in the database
       await parkingRepository.update(event.ticket);
+
+      // Now schedule new notifications with the updated time
+      if (event.ticket.endTime != null) {
+        await scheduleParkedNotifications(
+          vehicleRegistration: event.ticket.vehicle.registrationNumber,
+          parkingSpace: event.ticket.parkingSpace.adress,
+          startTime: event.ticket.startTime,
+          endTime: event.ticket.endTime!,
+          parkingId: event.ticket.id,
+        );
+
+        print(
+          'Notifications rescheduled for ticket ${event.ticket.id} with new end time: ${event.ticket.endTime}',
+        );
+      }
+
+      // Reload tickets
       add(LoadTickets());
     } catch (e) {
       emit(TicketError(e.toString()));
@@ -51,6 +72,7 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
       emit(TicketError(e.toString()));
     }
   }
+
   Future<void> _onResetTickets(
     ResetTickets event,
     Emitter<TicketState> emit,
