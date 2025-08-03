@@ -72,6 +72,7 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     Emitter<ParkingState> emit,
   ) async {
     try {
+      // Create the parking object first
       final parking = Parking(
         const Uuid().v4(),
         event.vehicle,
@@ -80,8 +81,14 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
         event.endTime,
       );
 
-      // If endTime is null, this is an ongoing parking - schedule periodic reminders
-      if (event.endTime == null) {
+      // Immediately signal TicketBloc with the new parking
+      // This will update the UI before database operation completes
+      BlocProvider.of<TicketBloc>(
+        navigatorKey.currentContext!,
+      ).add(TicketAdded(parking));
+
+      // Continue with normal operations in the background
+      /* if (event.endTime == null) {
         await scheduleOngoingParkingNotifications(
           vehicleRegistration: event.vehicle.registrationNumber,
           parkingSpace: event.parkingSpace.adress,
@@ -102,24 +109,10 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
             event.endTime!.hour,
             event.endTime!.minute,
           );
-
-          // If the scheduled time is in the past (like if user picks a time earlier today),
-          // add one day to schedule it for tomorrow
+          // If the scheduled time is in the past, add one day
           if (scheduledTime.isBefore(now)) {
             scheduledTime = scheduledTime.add(const Duration(days: 1));
           }
-
-          // Add a 5-minute warning before end time
-          //final reminderTime = scheduledTime.subtract(
-          //  const Duration(minutes: 1),
-          //);
-
-          // In your ParkingBloc, temporarily modify the reminder time for testing:
-          /* final reminderTime = DateTime.now().add(const Duration(seconds: 15));
-
-          print('Scheduling notification for parking ${parking.id}');
-          print('Current time: ${DateTime.now()}');
-          print('Reminder time: $reminderTime'); */
 
           await scheduleParkedNotifications(
             vehicleRegistration: event.vehicle.registrationNumber,
@@ -129,8 +122,12 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
             parkingId: parking.id,
           );
         }
-      }
+      } */
+      // Schedule the parking notification for androidtest
+     /*  await androidNotification(); */
+      await showcaseParkingNotifications(parking);
 
+      // Then complete the database operation
       await parkingRepository.addParking(parking);
       emit(const ParkingState());
       add(LoadParkingSpaces());

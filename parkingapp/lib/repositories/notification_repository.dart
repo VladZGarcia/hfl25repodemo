@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:parkingapp/main.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared/shared.dart';
 import 'package:timezone/timezone.dart' as tz;
-
 
 Future<void> scheduleNotification({
   required String title,
@@ -84,7 +84,6 @@ Future<void> cancelParkedNotifications(String parkingId) async {
   }
 }
 
-
 Future<void> requestNotificationPermission() async {
   if (Platform.isAndroid) {
     final status = await Permission.notification.request();
@@ -132,61 +131,145 @@ Future<void> requestPermissions() async {
     await impl?.requestNotificationsPermission();
   }
 }
-/* Future<void> androidNotification() async {
+
+Future<void> androidNotification() async {
   try {
     await requestNotificationPermission();
+    final now = tz.TZDateTime.now(tz.local);
 
-    final androidDetails = AndroidNotificationDetails(
-      'important_alarms', // Channel ID
-      'Important Alarms', // Channel Name
-      channelDescription: 'Notifications for parking alerts',
+    // Base notification details
+    final basicDetails = AndroidNotificationDetails(
+      'demo_channel',
+      'Notification Demos',
+      channelDescription: 'Shows different notification types',
       importance: Importance.high,
       priority: Priority.high,
-      enableLights: true,
-      enableVibration: true,
-      playSound: true,
-      showWhen: true,
-      visibility: NotificationVisibility.public,
-      category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: true,
-      icon: '@mipmap/ic_launcher',
-      channelShowBadge: true,
     );
 
-    final details = NotificationDetails(android: androidDetails);
+    // 1. IMMEDIATE BASIC NOTIFICATION
+    await notificationsPlugin.show(
+      1001,
+      "Basic Notification",
+      "This is a standard notification with default styling",
+      NotificationDetails(android: basicDetails),
+    );
 
-    // Schedule for 15 seconds in the future for testing
-    final scheduledTime = tz.TZDateTime.now(
-      tz.local,
-    ).add(const Duration(seconds: 15));
+    // 2. BIG TEXT STYLE
+    final bigTextStyle = BigTextStyleInformation(
+      'This is a much longer notification text that will be displayed in an expanded view when the user taps on it. It can contain much more information than a standard notification.',
+      contentTitle: 'Expanded Title',
+      summaryText: 'Summary text',
+    );
 
-    print('Attempting to schedule notification...');
-    print('Current time: ${tz.TZDateTime.now(tz.local)}');
-    print('Scheduled time: $scheduledTime');
+    await notificationsPlugin.show(
+      1002,
+      "Big Text Style",
+      "Tap to expand and see more text...",
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'demo_channel',
+          'Notification Demos',
+          channelDescription: 'Shows different notification types',
+          importance: Importance.high,
+          priority: Priority.high,
+          styleInformation: bigTextStyle,
+        ),
+      ),
+    );
 
+    // 3. SCHEDULED NOTIFICATION - 30 seconds
     await notificationsPlugin.zonedSchedule(
-      0,
-      "Test Notification",
-      "This should appear in 15 seconds",
-      scheduledTime,
-      details,
+      1003,
+      "Scheduled (30s)",
+      "This notification appeared 30 seconds after triggering",
+      now.add(const Duration(seconds: 30)),
+      NotificationDetails(android: basicDetails),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
 
-    // Also try an immediate notification
-    await notificationsPlugin.show(
-      1,
-      "Immediate Test 2",
-      "This should appear immediately",
-      details,
+    // 4. SCHEDULED NOTIFICATION - 1 minute
+    await notificationsPlugin.zonedSchedule(
+      1004,
+      "Scheduled (1min)",
+      "This notification appeared 1 minute after triggering",
+      now.add(const Duration(minutes: 1)),
+      NotificationDetails(android: basicDetails),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
 
-    print('Both notifications scheduled successfully');
+    // 5. NOTIFICATION WITH ACTIONS/BUTTONS
+    final actionsNotification = AndroidNotificationDetails(
+      'demo_channel',
+      'Notification Demos',
+      channelDescription: 'Shows different notification types',
+      importance: Importance.high,
+      priority: Priority.high,
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'extend',
+          'Extend Parking',
+          showsUserInterface: true,
+        ),
+        AndroidNotificationAction(
+          'cancel',
+          'Cancel Parking',
+          showsUserInterface: true,
+        ),
+      ],
+    );
+
+    await notificationsPlugin.show(
+      1005,
+      "Interactive Notification",
+      "This notification has action buttons",
+      NotificationDetails(android: actionsNotification),
+    );
+
+    // 6. PROGRESS BAR NOTIFICATION
+    final progressNotification = AndroidNotificationDetails(
+      'demo_channel',
+      'Notification Demos',
+      channelDescription: 'Shows different notification types',
+      importance: Importance.low,
+      priority: Priority.low,
+      showProgress: true,
+      maxProgress: 100,
+      progress: 65,
+      channelShowBadge: false,
+    );
+
+    await notificationsPlugin.show(
+      1006,
+      "Progress Indicator",
+      "Shows parking time elapsed (65%)",
+      NotificationDetails(android: progressNotification),
+    );
+
+    // 7. HIGH PRIORITY NOTIFICATION
+    final highPriorityNotification = AndroidNotificationDetails(
+      'critical_channel',
+      'Critical Alerts',
+      channelDescription: 'For time-sensitive alerts',
+      importance: Importance.max,
+      priority: Priority.max,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
+    );
+
+    await notificationsPlugin.show(
+      1007,
+      "⚠️ URGENT: Parking Expiring",
+      "Your parking session ends in 2 minutes",
+      NotificationDetails(android: highPriorityNotification),
+    );
+
+    print('All demo notifications created successfully');
   } catch (e, stack) {
-    print('Error scheduling notification: $e');
+    print('Error in notification demo: $e');
     print('Stack trace: $stack');
   }
-} */
+}
 
 Future<void> scheduleParkedNotifications({
   required String vehicleRegistration,
@@ -196,323 +279,39 @@ Future<void> scheduleParkedNotifications({
   required String parkingId,
 }) async {
   try {
-    // Convert parkingId to a consistent integer hash for notification ID
     final baseId = parkingId.hashCode;
+    final totalMinutes = endTime.difference(startTime).inMinutes;
 
-    // 1. Schedule notification for 30 seconds before end time (keep as is)
-    final endReminder = endTime.subtract(const Duration(seconds: 30));
+    // Only create key reminders: 50%, 75%, 90%, 95% and 100% of the way through
+    final reminderPoints = [0.5, 0.75, 0.9, 0.95, 1.0];
 
-    // Only schedule if it's in the future
-    if (endReminder.isAfter(DateTime.now())) {
-      await scheduleNotification(
-        title: 'Parking Ending Soon',
-        content:
-            'Your parking for $vehicleRegistration at $parkingSpace will end in 15 seconds.',
-        deliveryTime: endReminder,
-        id: baseId, // Use base ID for end notification
-      );
-      print('End reminder scheduled for $endReminder');
-    }
+    for (int i = 0; i < reminderPoints.length; i++) {
+      final minutesFromStart = (totalMinutes * reminderPoints[i]).round();
+      final reminderTime = startTime.add(Duration(minutes: minutesFromStart));
+      final minutesRemaining = totalMinutes - minutesFromStart;
 
-    // 2. Schedule minute reminders instead of hourly reminders
-    final Duration parkingDuration = endTime.difference(startTime);
-    final int totalMinutes = parkingDuration.inMinutes;
+      // Skip if already in the past
+      if (reminderTime.isBefore(DateTime.now())) continue;
 
-    // Schedule a reminder every minute (adjust as needed)
-    const int reminderInterval = 1; // 1 minute between notifications
-
-    // Calculate how many reminders to send (max 10 for testing)
-    final int maxReminders = 10;
-    final int reminderCount = (totalMinutes / reminderInterval).floor();
-    final int remindersToSchedule =
-        reminderCount > maxReminders ? maxReminders : reminderCount;
-
-    for (int i = 1; i <= remindersToSchedule; i++) {
-      // Calculate time for this minute reminder
-      final reminderTime = startTime.add(
-        Duration(minutes: i * reminderInterval),
-      );
-
-      // Skip if too close to end time or in the past
-      if (reminderTime.isAfter(endReminder) ||
-          reminderTime.isBefore(DateTime.now())) {
-        continue;
+      String content;
+      if (minutesRemaining > 0) {
+        content =
+            'Your parking for $vehicleRegistration has $minutesRemaining minutes remaining';
+      } else {
+        content = 'Your parking for $vehicleRegistration is ending now!';
       }
-
-      // Calculate minutes remaining
-      final minutesRemaining = totalMinutes - (i * reminderInterval);
 
       await scheduleNotification(
         title: 'Parking Update',
-        content:
-            minutesRemaining > 0
-                ? 'Your parking for $vehicleRegistration has $minutesRemaining minutes remaining.'
-                : 'Your parking for $vehicleRegistration is ending this minute.',
+        content: content,
         deliveryTime: reminderTime,
-        id: baseId + i, // Use base ID + index offset for minute notifications
-      );
-      print(
-        'Minute reminder $i scheduled for $reminderTime (${minutesRemaining} minutes remaining)',
+        id: baseId + i + 1,
       );
     }
-
-    // Add at the end of scheduleParkedNotifications method
-    /* await notificationsPlugin.show(
-      99999,
-      "Debug: Notifications Scheduled",
-      "Scheduled ${remindersToSchedule} minute reminders. Next one at ${DateTime.now().add(Duration(minutes: 1)).toString().substring(11, 16)}",
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'debug_channel',
-          'Debug Channel',
-          channelDescription: 'For debugging notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-    ); */
-
-    // For immediate testing with 5, 10, and 15 second intervals
-    final now = DateTime.now();
-    for (int i = 1; i <= 3; i++) {
-      final shortTestTime = now.add(Duration(seconds: i * 5));
-      await scheduleNotification(
-        title: 'Quick Test $i',
-        content: 'This should appear in ${i * 5} seconds',
-        deliveryTime: shortTestTime,
-        id: 88880 + i,
-      );
-      print('Quick test $i scheduled for $shortTestTime');
-    }
-
-    // EMULATOR SPECIFIC TESTS
-    final timeNow = DateTime.now();
-    for (int i = 1; i <= 3; i++) {
-      final veryShortTime = timeNow.add(
-        Duration(seconds: i * 3),
-      ); // 3, 6, 9 seconds
-
-      await notificationsPlugin.zonedSchedule(
-        77770 + i,
-        "Emulator Test $i",
-        "This should appear in ${i * 3} seconds",
-        tz.TZDateTime.from(veryShortTime, tz.local),
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'emulator_test_channel',
-            'Emulator Tests',
-            channelDescription: 'For testing notifications on emulator',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: null,
-      );
-      print('Emulator test $i scheduled for $veryShortTime');
-    }
-  } catch (e, stack) {
-    print('Error scheduling parking notifications: $e');
-    print('Stack trace: $stack');
+  } catch (e) {
+    print('Error scheduling notifications: $e');
   }
 }
-
-/* Future<void> testEmulatorNotifications() async {
-  try {
-    // 1. First show immediate notification
-    await notificationsPlugin.show(
-      5000,
-      "Immediate Test emulator",
-      "This should appear immediately",
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'emulator_test_channel',
-          'Emulator Tests',
-          channelDescription: 'For testing on emulator',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-    );
-    print("Immediate notification for emulator sent");
-
-    // 2. Schedule notifications based on EMULATOR time, not system time
-    final emulatorNow = DateTime.now(); // This gets emulator's current time
-    print("Emulator current time: $emulatorNow");
-
-    for (int i = 1; i <= 3; i++) {
-      // Use very short intervals (5, 10, 15 seconds)
-      final scheduledTime = emulatorNow.add(Duration(seconds: i * 5));
-
-      await notificationsPlugin.zonedSchedule(
-        5000 + i,
-        "Emulator Test ${i * 5}s",
-        "This should appear in ${i * 5} seconds from emulator time",
-        tz.TZDateTime.from(scheduledTime, tz.local), // Convert to TZ time
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'emulator_test_channel',
-            'Emulator Tests',
-            channelDescription: 'For testing on emulator',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: null,
-      );
-      print(
-        "Scheduled notification for ${i * 5} seconds from emulator now: $scheduledTime",
-      );
-    }
-  } catch (e, stack) {
-    print("Error in test notification: $e");
-    print(stack);
-  }
-} */
-
-/* Future<void> emulatorSequentialNotifications() async {
-  try {
-    // First immediate notification
-    await notificationsPlugin.show(
-      6000,
-      "Emulator Test: Start",
-      "Sequential notifications starting...",
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'emulator_test_channel',
-          'Emulator Tests',
-          channelDescription: 'For testing on emulator',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-    );
-
-    print("Starting sequential notifications");
-
-    // Instead of scheduling, use delayed functions
-    Future.delayed(const Duration(seconds: 5), () async {
-      await notificationsPlugin.show(
-        6001,
-        "Emulator Test: 5 Seconds",
-        "This appears 5 seconds after start",
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'emulator_test_channel',
-            'Emulator Tests',
-            channelDescription: 'For testing on emulator',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        ),
-      );
-      print("Showed 5-second notification");
-    });
-
-    Future.delayed(const Duration(seconds: 10), () async {
-      await notificationsPlugin.show(
-        6002,
-        "Emulator Test: 10 Seconds",
-        "This appears 10 seconds after start",
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'emulator_test_channel',
-            'Emulator Tests',
-            channelDescription: 'For testing on emulator',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        ),
-      );
-      print("Showed 10-second notification");
-    });
-
-    Future.delayed(const Duration(seconds: 15), () async {
-      await notificationsPlugin.show(
-        6003,
-        "Emulator Test: 15 Seconds",
-        "This appears 15 seconds after start",
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'emulator_test_channel',
-            'Emulator Tests',
-            channelDescription: 'For testing on emulator',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        ),
-      );
-      print("Showed 15-second notification");
-    });
-
-    return;
-  } catch (e) {
-    print("Error in emulator sequential notifications: $e");
-  }
-} */
-
-// Add this new function specifically for real device testing
-/* Future<void> realDeviceNotificationDemo({
-  required String vehicleRegistration,
-  required String parkingSpace,
-  required String parkingId,
-}) async {
-  try {
-    // Initial confirmation notification
-    await notificationsPlugin.show(
-      9000,
-      "Parking Started",
-      "Your parking for $vehicleRegistration at $parkingSpace has been registered",
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'parking_reminder_channel',
-          'Parking Reminders',
-          channelDescription: 'For parking notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-    );
-
-    // Use Future.delayed for reliable notifications during demo
-    Future.delayed(const Duration(seconds: 30), () async {
-      await notificationsPlugin.show(
-        9001,
-        "Parking Update",
-        "Your parking for $vehicleRegistration has 10 minutes remaining",
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'parking_reminder_channel',
-            'Parking Reminders',
-            channelDescription: 'For parking notifications',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        ),
-      );
-    });
-
-    Future.delayed(const Duration(seconds: 60), () async {
-      await notificationsPlugin.show(
-        9002,
-        "Parking Ending Soon",
-        "Your parking for $vehicleRegistration at $parkingSpace will end in 5 minutes",
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'parking_reminder_channel',
-            'Parking Reminders',
-            channelDescription: 'For parking notifications',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-        ),
-      );
-    });
-  } catch (e) {
-    print("Error in real device notifications: $e");
-  }
-} */
 
 Future<void> scheduleOngoingParkingNotifications({
   required String vehicleRegistration,
@@ -521,22 +320,16 @@ Future<void> scheduleOngoingParkingNotifications({
   required String parkingId,
 }) async {
   try {
-    // Convert parkingId to a consistent integer hash for notification ID
+    // Use fewer notifications with strategic intervals
+    // Instead of every minute, use increasing intervals
+    final intervals = [15, 30, 60, 120, 240]; // minutes between notifications
     final baseId = parkingId.hashCode;
 
-    // Schedule notifications every 30 minutes for 12 hours
-    // (Adjust the max duration as needed)
-    const int reminderIntervalMinutes = 1;
-    const int maxDurationHours = 12;
-    final int maxReminders = (maxDurationHours * 60) ~/ reminderIntervalMinutes;
-
-    print('Scheduling ongoing parking notifications for $vehicleRegistration');
-
-    // First immediate confirmation
+    // Immediate confirmation notification
     await notificationsPlugin.show(
       baseId,
-      "Ongoing Parking Started",
-      "Parking started for $vehicleRegistration at $parkingSpace. You'll receive periodic reminders.",
+      "Parking Started",
+      "Ongoing parking for $vehicleRegistration at $parkingSpace has started",
       NotificationDetails(
         android: AndroidNotificationDetails(
           'parking_reminder_channel',
@@ -548,38 +341,190 @@ Future<void> scheduleOngoingParkingNotifications({
       ),
     );
 
-    // Schedule periodic reminders
-    for (int i = 1; i <= maxReminders; i++) {
-      final reminderTime = startTime.add(
-        Duration(minutes: i * reminderIntervalMinutes),
-      );
-      final totalMinutes = i * reminderIntervalMinutes;
-      final hours = totalMinutes ~/ 60;
-      final minutes = totalMinutes % 60;
+    // Schedule only a few strategic reminders
+    DateTime nextTime = startTime;
+    for (int i = 0; i < intervals.length; i++) {
+      nextTime = nextTime.add(Duration(minutes: intervals[i]));
 
-      // Format time message
-      String timeMessage;
-      if (hours > 0) {
-        timeMessage = "$hours hour${hours > 1 ? 's' : ''}";
-        if (minutes > 0) {
-          timeMessage += " and $minutes minute${minutes > 1 ? 's' : ''}";
-        }
-      } else {
-        timeMessage = "$minutes minute${minutes > 1 ? 's' : ''}";
-      }
+      // Calculate elapsed time for message
+      final minutes = intervals.take(i + 1).reduce((a, b) => a + b);
+      final hours = minutes ~/ 60;
+      final remainingMinutes = minutes % 60;
+
+      final timeMessage =
+          hours > 0
+              ? "$hours hr${hours > 1 ? 's' : ''} ${remainingMinutes > 0 ? '$remainingMinutes min' : ''}"
+              : "$minutes min";
 
       await scheduleNotification(
         title: 'Ongoing Parking Reminder',
         content:
-            'Your parking for $vehicleRegistration at $parkingSpace has been active for $timeMessage.',
-        deliveryTime: reminderTime,
-        id: baseId + i,
+            'Your parking for $vehicleRegistration has been active for $timeMessage',
+        deliveryTime: nextTime,
+        id: baseId + i + 1,
       );
-
-      print('Ongoing reminder $i scheduled for $reminderTime');
     }
+
+    print(
+      'Scheduled ${intervals.length} strategic reminders instead of many small ones',
+    );
+  } catch (e) {
+    print('Error scheduling notifications: $e');
+  }
+}
+
+// Add this function to notification_repository.dart
+Future<void> showcaseParkingNotifications(Parking ticket) async {
+  try {
+    await requestNotificationPermission();
+    final now = tz.TZDateTime.now(tz.local);
+    final registration = ticket.vehicle.registrationNumber;
+    final location = ticket.parkingSpace.adress;
+    final baseId = ticket.id.hashCode;
+
+    // 1. IMMEDIATE CONFIRMATION (0 seconds)
+    await notificationsPlugin.show(
+      baseId + 1,
+      "Parking Confirmed",
+      "Vehicle $registration is now parked at $location",
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'parking_reminder_channel',
+          'Parking Reminders',
+          channelDescription: 'For parking notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+    );
+
+    // 2. BIG TEXT STYLE (30 seconds) - Parking details
+    final bigTextStyle = BigTextStyleInformation(
+      'Your vehicle $registration is parked at $location.\n'
+      'Start time: ${_formatTime(ticket.startTime)}\n'
+      'End time: ${ticket.endTime != null ? _formatTime(ticket.endTime!) : "Ongoing"}\n'
+      'Tap for more details or to manage your parking.',
+      contentTitle: 'Your Parking Details',
+      summaryText: 'Tap to view',
+    );
+
+    await notificationsPlugin.zonedSchedule(
+      baseId + 2,
+      "Parking Information",
+      "Tap to view your complete parking details",
+      now.add(const Duration(seconds: 30)),
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'parking_reminder_channel',
+          'Parking Reminders',
+          channelDescription: 'For parking notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+          styleInformation: bigTextStyle,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    // 3. INTERACTIVE NOTIFICATION (1 minute) - With action buttons
+    final actionsNotification = AndroidNotificationDetails(
+      'parking_reminder_channel',
+      'Parking Reminders',
+      channelDescription: 'For parking notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+      actions: <AndroidNotificationAction>[
+        AndroidNotificationAction(
+          'extend',
+          'Extend Time',
+          showsUserInterface: true,
+        ),
+        AndroidNotificationAction(
+          'end',
+          'End Parking',
+          showsUserInterface: true,
+        ),
+      ],
+    );
+
+    await notificationsPlugin.zonedSchedule(
+      baseId + 3,
+      "Manage Your Parking",
+      "Need to modify your parking for $registration?",
+      now.add(const Duration(minutes: 1)),
+      NotificationDetails(android: actionsNotification),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    // 4. PROGRESS NOTIFICATION (2 minutes) - Showing elapsed time
+    final progressNotification = AndroidNotificationDetails(
+      'parking_reminder_channel',
+      'Parking Reminders',
+      channelDescription: 'For parking notifications',
+      importance: Importance.low,
+      priority: Priority.low,
+      showProgress: true,
+      maxProgress: 100,
+      progress: 10, // Just started
+      channelShowBadge: false,
+    );
+
+    await notificationsPlugin.zonedSchedule(
+      baseId + 4,
+      "Parking Progress",
+      "Your parking at $location is 10% complete",
+      now.add(const Duration(minutes: 2)),
+      NotificationDetails(android: progressNotification),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    // 5. HIGH PRIORITY NOTIFICATION (3 minutes) - Upcoming expiration demo
+    final highPriorityNotification = AndroidNotificationDetails(
+      'parking_reminder_channel',
+      'Parking Reminders',
+      channelDescription: 'For parking notifications',
+      importance: Importance.max,
+      priority: Priority.max,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
+    );
+
+    await notificationsPlugin.zonedSchedule(
+      baseId + 5,
+      "⚠️ PARKING EXPIRING SOON",
+      "Your parking for $registration at $location will expire in 10 minutes!",
+      now.add(const Duration(minutes: 3)),
+      NotificationDetails(android: highPriorityNotification),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    // 6. REMINDER (4 minutes) - Receipt notification
+    await notificationsPlugin.zonedSchedule(
+      baseId + 6,
+      "Parking Receipt Available",
+      "View and save your parking receipt for $registration at $location",
+      now.add(const Duration(minutes: 4)),
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'parking_reminder_channel',
+          'Parking Reminders',
+          channelDescription: 'For parking notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    print('All parking notification types scheduled for the next 5 minutes');
   } catch (e, stack) {
-    print('Error scheduling ongoing parking notifications: $e');
+    print('Error in notification showcase: $e');
     print('Stack trace: $stack');
   }
+}
+
+// Helper function to format time
+String _formatTime(DateTime time) {
+  return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 }

@@ -12,12 +12,11 @@ class LoadTickets extends TicketEvent {}
 
 class UpdateTicketEndTime extends TicketEvent {
   final Parking ticket;
-  final DateTime endTime;
 
-  const UpdateTicketEndTime(this.ticket, this.endTime);
+  const UpdateTicketEndTime(this.ticket);
 
   @override
-  List<Object> get props => [ticket, endTime];
+  List<Object> get props => [ticket];
 }
 
 class DeleteTicket extends TicketEvent {
@@ -32,4 +31,22 @@ class DeleteTicket extends TicketEvent {
 class ResetTickets extends TicketEvent {
   @override
   List<Object> get props => [];
+}
+
+class TicketAdded extends TicketEvent {
+  final Parking newTicket;
+
+  const TicketAdded(this.newTicket);
+
+  @override
+  List<Object?> get props => [newTicket];
+}
+
+class TicketUpdated extends TicketEvent {
+  final List<Parking> tickets;
+
+  const TicketUpdated(this.tickets);
+
+  @override
+  List<Object> get props => [tickets];
 }

@@ -14,11 +14,30 @@ class TicketLoading extends TicketState {}
 
 class TicketLoaded extends TicketState {
   final List<Parking> tickets;
+  final bool isDeleting; // Add this line
+  final String? deletingTicketId; // Add this line - optional but helpful
 
-  const TicketLoaded(this.tickets);
+  const TicketLoaded(
+    this.tickets, {
+    this.isDeleting = false, // Add this default parameter
+    this.deletingTicketId, // Add this optional parameter
+  });
 
   @override
-  List<Object> get props => [tickets];
+  List<Object?> get props => [tickets, isDeleting, deletingTicketId]; // Update props
+
+  // Add this copyWith method
+  TicketLoaded copyWith({
+    List<Parking>? tickets,
+    bool? isDeleting,
+    String? deletingTicketId,
+  }) {
+    return TicketLoaded(
+      tickets ?? this.tickets,
+      isDeleting: isDeleting ?? this.isDeleting,
+      deletingTicketId: deletingTicketId ?? this.deletingTicketId,
+    );
+  }
 }
 
 class TicketError extends TicketState {

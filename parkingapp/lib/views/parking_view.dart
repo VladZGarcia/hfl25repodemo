@@ -4,8 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_bloc.dart';
 import 'package:parkingapp/blocs/parking/parking_event.dart';
 import 'package:parkingapp/blocs/parking/parking_state.dart';
-import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
-import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_bloc.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_event.dart';
 import 'package:parkingapp/blocs/vehicle/vehicle_state.dart';
@@ -215,8 +213,6 @@ class ParkingView extends StatelessWidget {
                                     endTime: parkingState.endTime?.toDateTime(),
                                   ),
                                 );
-                                // Notify TicketBloc to reload tickets
-                                context.read<TicketBloc>().add(LoadTickets());
                                 Navigator.of(context).pop();
                               }
                               : null,

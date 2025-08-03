@@ -42,6 +42,8 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> _configureLocalTimeZone() async {
   if (kIsWeb || Platform.isLinux) {
     return;
@@ -92,11 +94,22 @@ Future<FlutterLocalNotificationsPlugin> initializeNotifications() async {
 
 late final FlutterLocalNotificationsPlugin notificationsPlugin;
 
+Future<void> cleanupAllNotifications() async {
+  try {
+    // Cancel all notifications
+    await notificationsPlugin.cancelAll();
+    print('Cleaned up all notifications');
+  } catch (e) {
+    print('Error cleaning notifications: $e');
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  notificationsPlugin = await initializeNotifications();
+  await cleanupAllNotifications(); // Clear any lingering notifications
 
   await _configureLocalTimeZone();
-  notificationsPlugin = await initializeNotifications();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
@@ -194,6 +207,7 @@ class MyApp extends StatelessWidget {
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
           return MaterialApp(
+            navigatorKey: navigatorKey,
             color: const Color.fromARGB(255, 230, 216, 216),
             debugShowCheckedModeBanner: false,
             title: 'Flutter Demo',
