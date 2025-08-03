@@ -56,81 +56,6 @@ Future<void> scheduleNotification({
   }
 }
 
-Future<void> cancelNotification(int id) async {
-  await notificationsPlugin.cancel(id);
-}
-
-Future<void> cancelParkedNotifications(String parkingId) async {
-  try {
-    // Convert parkingId to a consistent integer hash for notification ID
-    final baseId = parkingId.hashCode;
-
-    // Cancel main end notification
-    await cancelNotification(baseId);
-
-    // Cancel all hourly/minute reminders (assuming max 60)
-    for (int i = 1; i <= 60; i++) {
-      await cancelNotification(baseId + i);
-    }
-
-    // Cancel any other special notifications
-    await cancelNotification(9000); // "Parking Started"
-    await cancelNotification(9001); // "Parking Update"
-    await cancelNotification(9002); // "Parking Ending Soon"
-
-    print('Canceled all notifications for parking $parkingId');
-  } catch (e) {
-    print('Error canceling notifications: $e');
-  }
-}
-
-Future<void> requestNotificationPermission() async {
-  if (Platform.isAndroid) {
-    final status = await Permission.notification.request();
-    print('Notification permission status: $status');
-
-    // On Android 12 and above, also request exact alarm permission
-    if (await Permission.scheduleExactAlarm.shouldShowRequestRationale) {
-      final alarmStatus = await Permission.scheduleExactAlarm.request();
-      print('Exact alarm permission status: $alarmStatus');
-    }
-
-    // Always request exact alarm permission explicitly
-    try {
-      await Permission.scheduleExactAlarm.request();
-      print('Exact alarm permission requested');
-    } catch (e) {
-      print('Error requesting exact alarm permission: $e');
-    }
-  }
-}
-
-Future<void> requestPermissions() async {
-  if (Platform.isIOS) {
-    final impl =
-        notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin
-            >();
-    await impl?.requestPermissions(alert: true, badge: true, sound: true);
-  }
-  if (Platform.isMacOS) {
-    final impl =
-        notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              MacOSFlutterLocalNotificationsPlugin
-            >();
-    await impl?.requestPermissions(alert: true, badge: true, sound: true);
-  }
-  if (Platform.isAndroid) {
-    final impl =
-        notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >();
-    await impl?.requestNotificationsPermission();
-  }
-}
 
 Future<void> androidNotification() async {
   try {
@@ -271,23 +196,17 @@ Future<void> androidNotification() async {
   }
 }
 
-Future<void> scheduleParkedNotifications({
-  required String vehicleRegistration,
-  required String parkingSpace,
-  required DateTime startTime,
-  required DateTime endTime,
-  required String parkingId,
-}) async {
+Future<void> scheduleParkedNotifications(Parking parking) async {
   try {
-    final baseId = parkingId.hashCode;
-    final totalMinutes = endTime.difference(startTime).inMinutes;
+    final baseId = parking.id.hashCode;
+    final totalMinutes = parking.endTime?.difference(parking.startTime).inMinutes;
 
     // Only create key reminders: 50%, 75%, 90%, 95% and 100% of the way through
     final reminderPoints = [0.5, 0.75, 0.9, 0.95, 1.0];
 
     for (int i = 0; i < reminderPoints.length; i++) {
-      final minutesFromStart = (totalMinutes * reminderPoints[i]).round();
-      final reminderTime = startTime.add(Duration(minutes: minutesFromStart));
+      final minutesFromStart = (totalMinutes! * reminderPoints[i]).round();
+      final reminderTime = parking.startTime.add(Duration(minutes: minutesFromStart));
       final minutesRemaining = totalMinutes - minutesFromStart;
 
       // Skip if already in the past
@@ -296,9 +215,9 @@ Future<void> scheduleParkedNotifications({
       String content;
       if (minutesRemaining > 0) {
         content =
-            'Your parking for $vehicleRegistration has $minutesRemaining minutes remaining';
+            'Your parking for ${parking.vehicle.registrationNumber} has $minutesRemaining minutes remaining';
       } else {
-        content = 'Your parking for $vehicleRegistration is ending now!';
+        content = 'Your parking for ${parking.vehicle.registrationNumber} is ending now!';
       }
 
       await scheduleNotification(
@@ -313,23 +232,18 @@ Future<void> scheduleParkedNotifications({
   }
 }
 
-Future<void> scheduleOngoingParkingNotifications({
-  required String vehicleRegistration,
-  required String parkingSpace,
-  required DateTime startTime,
-  required String parkingId,
-}) async {
+Future<void> scheduleOngoingParkingNotifications(Parking parking) async {
   try {
     // Use fewer notifications with strategic intervals
     // Instead of every minute, use increasing intervals
     final intervals = [15, 30, 60, 120, 240]; // minutes between notifications
-    final baseId = parkingId.hashCode;
+    final baseId = parking.id.hashCode;
 
     // Immediate confirmation notification
     await notificationsPlugin.show(
       baseId,
       "Parking Started",
-      "Ongoing parking for $vehicleRegistration at $parkingSpace has started",
+      "Ongoing parking for ${parking.vehicle.registrationNumber} at ${parking.parkingSpace.adress} has started",
       NotificationDetails(
         android: AndroidNotificationDetails(
           'parking_reminder_channel',
@@ -342,7 +256,7 @@ Future<void> scheduleOngoingParkingNotifications({
     );
 
     // Schedule only a few strategic reminders
-    DateTime nextTime = startTime;
+    DateTime nextTime = parking.startTime;
     for (int i = 0; i < intervals.length; i++) {
       nextTime = nextTime.add(Duration(minutes: intervals[i]));
 
@@ -359,7 +273,7 @@ Future<void> scheduleOngoingParkingNotifications({
       await scheduleNotification(
         title: 'Ongoing Parking Reminder',
         content:
-            'Your parking for $vehicleRegistration has been active for $timeMessage',
+            'Your parking for ${parking.vehicle.registrationNumber} has been active for $timeMessage',
         deliveryTime: nextTime,
         id: baseId + i + 1,
       );
@@ -389,9 +303,12 @@ Future<void> showcaseParkingNotifications(Parking ticket) async {
       "Vehicle $registration is now parked at $location",
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'parking_reminder_channel',
+          'parking_reminder_channel_v2',
           'Parking Reminders',
           channelDescription: 'For parking notifications',
+          sound: const RawResourceAndroidNotificationSound(
+            'carpark_notification',
+          ),
           importance: Importance.max,
           priority: Priority.high,
         ),
@@ -415,9 +332,12 @@ Future<void> showcaseParkingNotifications(Parking ticket) async {
       now.add(const Duration(seconds: 30)),
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'parking_reminder_channel',
+          'parking_reminder_channel_v2',
           'Parking Reminders',
           channelDescription: 'For parking notifications',
+          sound: const RawResourceAndroidNotificationSound(
+            'carpark_notification',
+          ),
           importance: Importance.high,
           priority: Priority.high,
           styleInformation: bigTextStyle,
@@ -428,9 +348,10 @@ Future<void> showcaseParkingNotifications(Parking ticket) async {
 
     // 3. INTERACTIVE NOTIFICATION (1 minute) - With action buttons
     final actionsNotification = AndroidNotificationDetails(
-      'parking_reminder_channel',
+      'parking_reminder_channel_v2',
       'Parking Reminders',
       channelDescription: 'For parking notifications',
+      sound: const RawResourceAndroidNotificationSound('carpark_notification'),
       importance: Importance.high,
       priority: Priority.high,
       actions: <AndroidNotificationAction>[
@@ -458,9 +379,10 @@ Future<void> showcaseParkingNotifications(Parking ticket) async {
 
     // 4. PROGRESS NOTIFICATION (2 minutes) - Showing elapsed time
     final progressNotification = AndroidNotificationDetails(
-      'parking_reminder_channel',
+      'parking_reminder_channel_v2',
       'Parking Reminders',
       channelDescription: 'For parking notifications',
+      sound: const RawResourceAndroidNotificationSound('carpark_notification'),
       importance: Importance.low,
       priority: Priority.low,
       showProgress: true,
@@ -480,9 +402,10 @@ Future<void> showcaseParkingNotifications(Parking ticket) async {
 
     // 5. HIGH PRIORITY NOTIFICATION (3 minutes) - Upcoming expiration demo
     final highPriorityNotification = AndroidNotificationDetails(
-      'parking_reminder_channel',
+      'parking_reminder_channel_v2',
       'Parking Reminders',
       channelDescription: 'For parking notifications',
+      sound: const RawResourceAndroidNotificationSound('carpark_notification'),
       importance: Importance.max,
       priority: Priority.max,
       fullScreenIntent: true,
@@ -507,9 +430,12 @@ Future<void> showcaseParkingNotifications(Parking ticket) async {
       now.add(const Duration(minutes: 4)),
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'parking_reminder_channel',
+          'parking_reminder_channel_v2',
           'Parking Reminders',
           channelDescription: 'For parking notifications',
+          sound: const RawResourceAndroidNotificationSound(
+            'carpark_notification',
+          ),
           importance: Importance.high,
           priority: Priority.high,
         ),
@@ -527,4 +453,79 @@ Future<void> showcaseParkingNotifications(Parking ticket) async {
 // Helper function to format time
 String _formatTime(DateTime time) {
   return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+}
+
+Future<void> cancelNotification(int id) async {
+  await notificationsPlugin.cancel(id);
+}
+
+Future<void> cancelParkedNotifications(String parkingId) async {
+  try {
+    // Convert parkingId to a consistent integer hash for notification ID
+    final baseId = parkingId.hashCode;
+
+    // Cancel main end notification
+    await cancelNotification(baseId);
+
+    // Cancel all hourly/minute reminders (assuming max 60)
+    for (int i = 1; i <= 60; i++) {
+      await cancelNotification(baseId + i);
+    }
+
+    // Cancel any other special notifications
+    await cancelNotification(9000); // "Parking Started"
+    await cancelNotification(9001); // "Parking Update"
+    await cancelNotification(9002); // "Parking Ending Soon"
+
+    print('Canceled all notifications for parking $parkingId');
+  } catch (e) {
+    print('Error canceling notifications: $e');
+  }
+}
+
+Future<bool> requestNotificationPermission() async {
+  if (Platform.isAndroid) {
+    final status = await Permission.notification.request();
+    print('Notification permission status: $status');
+
+    // Request exact alarm permission
+    try {
+      await Permission.scheduleExactAlarm.request();
+      print('Exact alarm permission requested');
+    } catch (e) {
+      print('Error requesting exact alarm permission: $e');
+    }
+
+    // Return true if notification permission was granted
+    return status.isGranted;
+  }
+
+  return true; // Non-Android platforms
+}
+
+Future<void> requestPermissions() async {
+  if (Platform.isIOS) {
+    final impl =
+        notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >();
+    await impl?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+  if (Platform.isMacOS) {
+    final impl =
+        notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin
+            >();
+    await impl?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+  if (Platform.isAndroid) {
+    final impl =
+        notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+    await impl?.requestNotificationsPermission();
+  }
 }

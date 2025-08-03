@@ -72,7 +72,10 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     Emitter<ParkingState> emit,
   ) async {
     try {
-      // Create the parking object first
+      // Request notification permission
+      final permissionGranted = await requestNotificationPermission();
+
+      // Create the parking object
       final parking = Parking(
         const Uuid().v4(),
         event.vehicle,
@@ -82,58 +85,36 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
       );
 
       // Immediately signal TicketBloc with the new parking
-      // This will update the UI before database operation completes
       BlocProvider.of<TicketBloc>(
         navigatorKey.currentContext!,
       ).add(TicketAdded(parking));
 
       // Continue with normal operations in the background
-      /* if (event.endTime == null) {
-        await scheduleOngoingParkingNotifications(
-          vehicleRegistration: event.vehicle.registrationNumber,
-          parkingSpace: event.parkingSpace.adress,
-          startTime: event.startTime,
-          parkingId: parking.id,
-        );
+      if (parking.endTime == null) {
+        await scheduleOngoingParkingNotifications(parking);
       } else {
-        // Existing code for parking with end time
-        final startMinutes = event.startTime.hour * 60 + event.startTime.minute;
-        final endMinutes = event.endTime!.hour * 60 + event.endTime!.minute;
-        if (endMinutes > startMinutes) {
-          // Convert TimeOfDay to DateTime for today
-          final now = DateTime.now();
-          var scheduledTime = DateTime(
-            now.year,
-            now.month,
-            now.day,
-            event.endTime!.hour,
-            event.endTime!.minute,
-          );
-          // If the scheduled time is in the past, add one day
-          if (scheduledTime.isBefore(now)) {
-            scheduledTime = scheduledTime.add(const Duration(days: 1));
-          }
+        await scheduleParkedNotifications(parking);
+      }
 
-          await scheduleParkedNotifications(
-            vehicleRegistration: event.vehicle.registrationNumber,
-            parkingSpace: event.parkingSpace.adress,
-            startTime: event.startTime,
-            endTime: event.endTime!,
-            parkingId: parking.id,
-          );
-        }
-      } */
-      // Schedule the parking notification for androidtest
-     /*  await androidNotification(); */
+      // Show warning if notifications are disabled
+      if (!permissionGranted && navigatorKey.currentContext != null) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Notifications disabled - you won\'t receive parking reminders',
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+
       await showcaseParkingNotifications(parking);
-
-      // Then complete the database operation
       await parkingRepository.addParking(parking);
       emit(const ParkingState());
       add(LoadParkingSpaces());
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
-      print('Parking error2: ${e.toString()}');
+      print('Parking error: ${e.toString()}');
     }
   }
 

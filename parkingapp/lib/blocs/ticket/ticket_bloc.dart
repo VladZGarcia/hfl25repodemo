@@ -55,18 +55,14 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
       }
 
       // Then perform actual update in the background
+      
       await parkingRepository.update(event.ticket);
+      cancelParkedNotifications(event.ticket.id);
 
       // Schedule notifications if needed
-      /* if (event.ticket.endTime != null) {
-        await scheduleParkedNotifications(
-          vehicleRegistration: event.ticket.vehicle.registrationNumber,
-          parkingSpace: event.ticket.parkingSpace.adress,
-          startTime: event.ticket.startTime,
-          endTime: event.ticket.endTime!,
-          parkingId: event.ticket.id,
-        );
-      } */
+      if (event.ticket.endTime != null) {
+        await scheduleParkedNotifications(event.ticket);
+      }
     } catch (e) {
       print("Error updating ticket: $e");
       add(LoadTickets()); // Reload on error

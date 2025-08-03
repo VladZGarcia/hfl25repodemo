@@ -72,7 +72,7 @@ void main() {
         ).thenAnswer((_) async => testTickets);
         return ticketBloc;
       },
-      act: (bloc) => bloc.add(UpdateTicketEndTime(testTicket, DateTime(2023, 1, 1, 12, 0))),
+      act: (bloc) => bloc.add(UpdateTicketEndTime(testTicket)),
       expect: () => [TicketLoading(), TicketLoaded(testTickets)],
       verify: (_) {
         verify(() => mockParkingRepository.update(any())).called(1);
@@ -103,7 +103,7 @@ void main() {
         ).thenThrow(Exception('update error'));
         return ticketBloc;
       },
-      act: (bloc) => bloc.add(UpdateTicketEndTime(testTicket, DateTime(2023, 1, 1, 12, 0))),
+      act: (bloc) => bloc.add(UpdateTicketEndTime(testTicket)),
       expect: () => [isA<TicketError>()],
     );
 

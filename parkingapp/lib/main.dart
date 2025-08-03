@@ -123,12 +123,6 @@ void main() async {
     setWindowMaxSize(Size.infinite);
   }
 
-  await notificationsPlugin
-      .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
-      ?.requestNotificationsPermission(); // Changed from requestPermission
-
   final channel = AndroidNotificationChannel(
     'parking_reminder_channel',
     'Parking Reminders',

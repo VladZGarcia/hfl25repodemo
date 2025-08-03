@@ -294,7 +294,7 @@ class TicketListItem extends StatelessWidget {
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Ticket is ongoing, remember to stop parking!'),
+                          content: Text('Ticket is ongoing, don\'t forget to end parking!'),
                           duration: Duration(seconds: 2),
                         ),
                       );
