@@ -95,7 +95,9 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
       } else {
         await scheduleParkedNotifications(parking);
       }
-
+      // For Showcase of posible notifications
+      await showcaseParkingNotifications(parking);
+  
       // Show warning if notifications are disabled
       if (!permissionGranted && navigatorKey.currentContext != null) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
@@ -108,7 +110,7 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
         );
       }
 
-      await showcaseParkingNotifications(parking);
+      
       await parkingRepository.addParking(parking);
       emit(const ParkingState());
       add(LoadParkingSpaces());

@@ -10,41 +10,41 @@ Future<void> scheduleNotification({
   required String content,
   required DateTime deliveryTime,
   required int id,
+  NotificationDetails? notificationDetails,
 }) async {
   try {
     await requestNotificationPermission();
 
-    final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime.from(deliveryTime, tz.local);
 
-    print('Current time: $now');
-    print('Scheduled time: $scheduledDate');
-    print('Device timezone: ${DateTime.now().timeZoneName}');
-    print('TZ local timezone: ${tz.local.name}');
-    print('Notification scheduled for: ${scheduledDate.toString()}');
-    final androidDetails = AndroidNotificationDetails(
-      'parking_reminder_channel',
-      'Parking Reminders',
-      channelDescription: 'Notifications for parking session end times',
-      importance: Importance.max,
-      priority: Priority.high,
-      enableLights: true,
-      enableVibration: true,
-      playSound: true, // Use default sound instead of custom
-      channelShowBadge: true,
-      visibility: NotificationVisibility.public,
-    );
-
-    final notificationDetails = NotificationDetails(android: androidDetails);
+    // Use provided details or create default ones
+    final details =
+        notificationDetails ??
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'parking_reminder_channel',
+            'Parking Reminders',
+            channelDescription: 'Notifications for parking session end times',
+            importance: Importance.max,
+            priority: Priority.high,
+            enableLights: true,
+            enableVibration: true,
+            playSound: true,
+            sound: const RawResourceAndroidNotificationSound(
+              'carpark_notification',
+            ),
+            channelShowBadge: true,
+            visibility: NotificationVisibility.public,
+          ),
+        );
 
     await notificationsPlugin.zonedSchedule(
       id,
       title,
       content,
       scheduledDate,
-      notificationDetails,
-      androidScheduleMode:
-          AndroidScheduleMode.exactAllowWhileIdle, // Make sure this is set
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: null,
     );
 
@@ -55,7 +55,6 @@ Future<void> scheduleNotification({
     rethrow;
   }
 }
-
 
 Future<void> androidNotification() async {
   try {
@@ -199,36 +198,168 @@ Future<void> androidNotification() async {
 Future<void> scheduleParkedNotifications(Parking parking) async {
   try {
     final baseId = parking.id.hashCode;
-    final totalMinutes = parking.endTime?.difference(parking.startTime).inMinutes;
+    final totalMinutes =
+        parking.endTime?.difference(parking.startTime).inMinutes;
 
-    // Only create key reminders: 50%, 75%, 90%, 95% and 100% of the way through
+    if (parking.endTime == null) {
+      print('Cannot schedule countdown for parking without end time');
+      return;
+    }
+
+    // 1. IMMEDIATE START NOTIFICATION WITH COUNTDOWN INFO
+    final startDetails = AndroidNotificationDetails(
+      'parking_reminder_channel_v2',
+      'Parking Reminders',
+      channelDescription: 'For parking notifications',
+      sound: const RawResourceAndroidNotificationSound('carpark_notification'),
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    // Format duration for display
+    final durationText = _formatDuration(Duration(minutes: totalMinutes!));
+
+    await notificationsPlugin.show(
+      baseId,
+      "Parking Started",
+      "Your vehicle ${parking.vehicle.registrationNumber} is now parked at ${parking.parkingSpace.adress}\n"
+          "Time remaining: $durationText (until ${_formatTime(parking.endTime!)})",
+      NotificationDetails(android: startDetails),
+    );
+
+    // 2. COUNTDOWN NOTIFICATIONS AT STRATEGIC POINTS
     final reminderPoints = [0.5, 0.75, 0.9, 0.95, 1.0];
 
     for (int i = 0; i < reminderPoints.length; i++) {
-      final minutesFromStart = (totalMinutes! * reminderPoints[i]).round();
-      final reminderTime = parking.startTime.add(Duration(minutes: minutesFromStart));
+      final minutesFromStart = (totalMinutes * reminderPoints[i]).round();
+      final reminderTime = parking.startTime.add(
+        Duration(minutes: minutesFromStart),
+      );
       final minutesRemaining = totalMinutes - minutesFromStart;
 
       // Skip if already in the past
       if (reminderTime.isBefore(DateTime.now())) continue;
 
+      // PROGRESS BAR FOR COUNTDOWN VISUALIZATION
+      final progressPercent = (reminderPoints[i] * 100).round();
       String content;
+
       if (minutesRemaining > 0) {
+        // Format remaining time for better readability
+        final remainingText = _formatDuration(
+          Duration(minutes: minutesRemaining),
+        );
         content =
-            'Your parking for ${parking.vehicle.registrationNumber} has $minutesRemaining minutes remaining';
+            "Your parking for ${parking.vehicle.registrationNumber} has $remainingText remaining";
       } else {
-        content = 'Your parking for ${parking.vehicle.registrationNumber} is ending now!';
+        content =
+            "Your parking for ${parking.vehicle.registrationNumber} is ending now!";
       }
 
-      await scheduleNotification(
-        title: 'Parking Update',
-        content: content,
-        deliveryTime: reminderTime,
-        id: baseId + i + 1,
-      );
+      // Different notification style based on how close to expiration
+      if (reminderPoints[i] >= 0.9) {
+        // URGENT NOTIFICATIONS (90%, 95%, 100%)
+        final urgentDetails = AndroidNotificationDetails(
+          'parking_reminder_channel_v2',
+          'Parking Reminders',
+          channelDescription: 'For parking notifications',
+          sound: const RawResourceAndroidNotificationSound(
+            'carpark_notification',
+          ),
+          importance: Importance.max,
+          priority: Priority.max,
+          fullScreenIntent:
+              reminderPoints[i] >= 0.95, // Full screen for final notifications
+          category: AndroidNotificationCategory.alarm,
+          visibility: NotificationVisibility.public,
+        );
+
+        // Create NotificationDetails with the Android details
+        final notificationDetails = NotificationDetails(android: urgentDetails);
+
+        // Pass the notificationDetails to the function
+        await scheduleNotification(
+          title:
+              reminderPoints[i] == 1.0
+                  ? '⚠️ PARKING EXPIRED'
+                  : '⚠️ URGENT: Parking Ending Soon',
+          content: content,
+          deliveryTime: reminderTime,
+          id: baseId + i + 1,
+          notificationDetails: notificationDetails, // Add this line
+        );
+      } else {
+        // PROGRESS NOTIFICATIONS (50%, 75%)
+        final progressDetails = AndroidNotificationDetails(
+          'parking_reminder_channel_v2',
+          'Parking Reminders',
+          channelDescription: 'For parking notifications',
+          sound: const RawResourceAndroidNotificationSound(
+            'carpark_notification',
+          ),
+          importance: Importance.high,
+          priority: Priority.high,
+          showProgress: true,
+          maxProgress: 100,
+          progress: progressPercent,
+        );
+
+        await notificationsPlugin.zonedSchedule(
+          baseId + i + 1,
+          "Parking Countdown: $progressPercent% Complete",
+          content,
+          tz.TZDateTime.from(reminderTime, tz.local),
+          NotificationDetails(android: progressDetails),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        );
+      }
     }
+
+    // 3. FINAL "ALMOST EXPIRED" NOTIFICATION WITH ACTIONS (5 minutes before expiry)
+    if (totalMinutes > 5) {
+      final fiveMinReminderTime = parking.endTime!.subtract(
+        const Duration(minutes: 5),
+      );
+
+      // Skip if already in the past
+      if (fiveMinReminderTime.isAfter(DateTime.now())) {
+        final actionsNotification = AndroidNotificationDetails(
+          'parking_reminder_channel_v2',
+          'Parking Reminders',
+          channelDescription: 'For parking notifications',
+          sound: const RawResourceAndroidNotificationSound(
+            'carpark_notification',
+          ),
+          importance: Importance.max,
+          priority: Priority.max,
+          actions: <AndroidNotificationAction>[
+            AndroidNotificationAction(
+              'extend',
+              'Extend Time',
+              showsUserInterface: true,
+            ),
+            AndroidNotificationAction(
+              'end',
+              'End Now',
+              showsUserInterface: true,
+            ),
+          ],
+        );
+
+        await notificationsPlugin.zonedSchedule(
+          baseId + reminderPoints.length + 1,
+          "⏱️ 5 Minutes Remaining",
+          "Your parking for ${parking.vehicle.registrationNumber} at ${parking.parkingSpace.adress} will expire soon!",
+          tz.TZDateTime.from(fiveMinReminderTime, tz.local),
+          NotificationDetails(android: actionsNotification),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        );
+      }
+    }
+
+    print('Scheduled parking countdown notifications with strategic reminders');
   } catch (e) {
-    print('Error scheduling notifications: $e');
+    print('Error scheduling countdown notifications: $e');
   }
 }
 
@@ -527,5 +658,17 @@ Future<void> requestPermissions() async {
               AndroidFlutterLocalNotificationsPlugin
             >();
     await impl?.requestNotificationsPermission();
+  }
+}
+
+// Add this helper function to format duration nicely
+String _formatDuration(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes % 60;
+
+  if (hours > 0) {
+    return '$hours hr${hours > 1 ? 's' : ''} ${minutes > 0 ? '$minutes min' : ''}';
+  } else {
+    return '$minutes min';
   }
 }
