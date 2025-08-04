@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:parkingapp/blocs/ticket/ticket_bloc.dart';
 import 'package:parkingapp/blocs/ticket/ticket_event.dart';
 import 'package:parkingapp/main.dart';
@@ -96,7 +95,7 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
         await scheduleParkedNotifications(parking);
       }
       // For Showcase of posible notifications
-      await showcaseParkingNotifications(parking);
+      /* await showcaseParkingNotifications(parking); */
   
       // Show warning if notifications are disabled
       if (!permissionGranted && navigatorKey.currentContext != null) {
